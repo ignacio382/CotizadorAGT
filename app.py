@@ -1,11 +1,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import streamlit.components.v1 as components
 from datetime import datetime, timedelta
 
 st.set_page_config(page_title="AGT - Cotizador Multimodal Profesional", page_icon="🌐", layout="wide")
 
-# Custom CSS for Professional AGT Identity (Navy blue #0B2240, Orange #FF6B00)
+# Estilos visuales con la identidad de AGT (Azul Marino #0B2240 y Naranja #FF6B00)
 st.markdown("""
 <style>
     .logo-container {
@@ -23,34 +24,17 @@ st.markdown("""
     .total-box { background-color: #0B2240; color: white; padding: 25px; border-radius: 8px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
     .total-amount { font-size: 36px; font-weight: bold; color: #FF6B00; margin-top: 5px; display: block; }
     .clause-box { background-color: #FFFDF5; border: 1px solid #FFEBAA; padding: 20px; border-radius: 6px; font-size: 14px; color: #333333; line-height: 1.6; }
-    
-    .print-btn {
-        background-color: #FF6B00;
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 15px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: bold;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .print-btn:hover {
-        background-color: #e05e00;
-    }
 
+    /* Reglas para ocultar la interfaz interactiva al momento de imprimir o guardar PDF */
     @media print {
-        .stButton, .stNumberInput, .stSelectbox, .stTextInput, footer, header, .print-section, iframe, .stCheckbox { display: none !important; }
+        .stButton, .stNumberInput, .stSelectbox, .stTextInput, footer, header, .print-section, iframe, .stCheckbox, div[data-testid="stHeader"] { display: none !important; }
         div[data-testid="stSidebar"] { display: none !important; }
         .main-title, .section-header, .total-box, .clause-box, .logo-container, .logo-img { display: block !important; }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Renderizado del Logo Real de AGT usando URL segura
+# Renderizado de tu Logo Oficial (vinculado a tu archivo de GitHub)
 st.markdown("""
 <div class="logo-container">
     <img class="logo-img" src="https://raw.githubusercontent.com/ignacio382/CotizadorAGT/main/5_2.png" onerror="this.src='https://i.imgur.com/8K59cM2.png'" alt="AGT Logo">
@@ -60,7 +44,7 @@ st.markdown("""
 st.markdown('<div class="main-title">ARGENTINA GLOBAL TRADE SRL</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">FORWARDER & LOGÍSTICA INTERNACIONAL - SISTEMA DE COTIZACIÓN PROFESIONAL</div>', unsafe_allow_html=True)
 
-# Base de datos limpia de AGT
+# Base de datos indexada de AGT
 raw_data = [
     ["CFR", "Maritimo", "Exportacion", "FCL", "THC 20'", "Por Contenedor", "USD", 295.00],
     ["CFR", "Maritimo", "Exportacion", "FCL", "THC 40'", "Por Contenedor", "USD", 335.00],
@@ -179,7 +163,7 @@ if incoterm == "DDP":
         st.caption(f"💵 **Impuestos Provisionales Calculados (Est.):** USD {duties_calculated:,.2f}")
         despacho_total += duties_calculated
 
-# Database Filter matching
+# Lógica de filtrado en Base de Datos
 filtered_df = df[
     (df['Incoterm'] == incoterm) & 
     (df['Modalidad'] == modalidad) & 
@@ -205,7 +189,7 @@ else:
     fijos_total = 0.0
     st.info("No se registran cargos fijos adicionales automáticos para este perfil.")
 
-# General Financer Totals
+# Totales Consolidados
 gran_total = fijos_total + flete_intl + gastos_term + delivery_cost + profit_share + despacho_total
 
 st.markdown('<div class="section-header">5. Consolidación de Liquidación y Totales</div>', unsafe_allow_html=True)
@@ -222,7 +206,7 @@ st.markdown(f'''
 </div>
 ''', unsafe_allow_html=True)
 
-# Operational Legal clauses
+# Cláusulas legales operativas
 st.markdown('<div class="section-header">6. Términos Legales, Validez y Validez del Servicio</div>', unsafe_allow_html=True)
 clausula_final = f"• **VALIDEZ TEMPORAL:** Esta propuesta es válida hasta el **{fecha_validez.strftime('%d/%m/%Y')}** (5 días desde su emisión).\n"
 if modalidad == "Maritimo":
@@ -233,6 +217,31 @@ clausula_final += "• **REGULACIONES:** Las cotizaciones están sujetas a varia
 
 st.markdown(f'<div class="clause-box">{clausula_final.replace("\n", "<br>")}</div>', unsafe_allow_html=True)
 
-# Sección de Impresión arreglada con JavaScript directo y estilos corporativos
+# Sección de Impresión Forzada vía Parent Iframe Javascript
 st.markdown('<div class="section-header print-section">7. Acciones de Exportación e Impresión</div>', unsafe_allow_html=True)
-st.markdown('<div class="print-section"><button class="print-btn" onclick="window.print()">🖨️ Imprimir Cotización / Guardar en PDF</button></div>', unsafe_allow_html=True)
+
+components.html(
+    """
+    <style>
+        .print-btn {
+            background-color: #FF6B00;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 15px;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+        .print-btn:hover {
+            background-color: #e05e00;
+        }
+    </style>
+    <button class="print-btn" onclick="window.parent.print()">🖨️ Imprimir Cotización / Guardar en PDF</button>
+    """,
+    height=60,
+)
+st.markdown('<div class="print-note print-section">Nota técnica: Si tu navegador bloquea las ventanas emergentes del servidor de Streamlit, recuerda que puedes usar el atajo de teclado nativo de tu sistema en cualquier momento: **Ctrl + P** en Windows o **Cmd + P** en Mac.</div>', unsafe_allow_html=True)
