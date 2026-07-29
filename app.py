@@ -1,4 +1,4 @@
-import streamlit st as st
+import streamlit as st
 import pandas as pd
 import numpy as np
 import streamlit.components.v1 as components
@@ -101,7 +101,6 @@ for inc in all_incoterms:
             template_inc = inc if inc in ["CFR", "DAP"] else "DAP"
             template_eq = eq
             
-            # Filtrado y enrutamiento inteligente estricto por modo
             if template_mod == "Aereo":
                 matches = [r for r in raw_data if r[1] == "Aereo"]
             elif template_mod == "Terrestre":
