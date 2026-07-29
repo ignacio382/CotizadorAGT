@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit st as st
 import pandas as pd
 import numpy as np
 import streamlit.components.v1 as components
@@ -44,7 +44,7 @@ st.markdown("""
 st.markdown('<div class="main-title">ARGENTINA GLOBAL TRADE SRL</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">FORWARDER & LOGÍSTICA INTERNACIONAL</div>', unsafe_allow_html=True)
 
-# Base de datos indexada limpia y específica de AGT
+# Base de datos indexada limpia y estructurada estrictamente por tipo de transporte
 raw_data = [
     # CFR Marítimo Exportación FCL
     ["CFR", "Maritimo", "Exportacion", "FCL", "THC 20'", "Por Contenedor", "USD", 295.00],
@@ -79,6 +79,12 @@ raw_data = [
     ["DAP", "Aereo", "Importacion", "Aereo", "Manejo de documentación", "Por AWB", "USD", 95.00],
     ["DAP", "Aereo", "Importacion", "Aereo", "Carga DGR (si aplica)", "Por Awb (MIN)", "USD", 180.00],
     ["DAP", "Aereo", "Importacion", "Aereo", "Transfer fee (if necessary)", "5%, Min. USD 150", "USD", 150.00],
+
+    # Terrestre Conceptos Específicos (FTL / LTL)
+    ["DAP", "Terrestre", "Importacion", "FTL", "Documentación Terrestre Gral.", "Por CTR/Camión", "USD", 85.00],
+    ["DAP", "Terrestre", "Importacion", "FTL", "Peajes Internacionales", "Por Viaje", "USD", 120.00],
+    ["DAP", "Terrestre", "Importacion", "LTL", "Manejo de guía CRT", "Por Remisión", "USD", 45.00],
+    ["DAP", "Terrestre", "Importacion", "LTL", "Consolidación en Depósito", "Por Pallet", "USD", 25.00],
 ]
 
 all_incoterms = ["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP", "FAS", "FOB", "CFR", "CIF"]
@@ -91,14 +97,20 @@ existing_keys = set((r[0], r[1], r[2], r[3], r[4]) for r in raw_data)
 for inc in all_incoterms:
     for mod in all_modalities:
         for eq in all_equipos:
-            template_mod = mod if mod in ["Maritimo", "Aereo"] else "Maritimo"
+            template_mod = mod
             template_inc = inc if inc in ["CFR", "DAP"] else "DAP"
-            template_eq = "FCL" if eq in ["FCL", "FCL / LCL", "FTL"] else ("LCL" if eq in ["LCL", "LTL"] else "Aereo")
+            template_eq = eq
             
+            # Filtrado y enrutamiento inteligente estricto por modo
             if template_mod == "Aereo":
                 matches = [r for r in raw_data if r[1] == "Aereo"]
+            elif template_mod == "Terrestre":
+                matches = [r for r in raw_data if r[1] == "Terrestre" and (template_eq in r[3] or "LTL" in r[3] if template_eq == "LTL" else "FTL" in r[3])]
+                if not matches:
+                    matches = [r for r in raw_data if r[1] == "Terrestre" and r[3] == "LTL"]
             else:
-                matches = [r for r in raw_data if r[0] == template_inc and r[1] == "Maritimo" and r[3] == "FCL"]
+                target_eq = "LCL" if template_eq == "LCL" else "FCL"
+                matches = [r for r in raw_data if r[0] == template_inc and r[1] == "Maritimo" and r[3] == target_eq]
                 
             for m in matches:
                 if (inc, mod, "Importacion", eq, m[4]) not in existing_keys:
@@ -133,7 +145,7 @@ with col1:
     tipo_eq = st.selectbox("Tipo de Equipamiento / Modalidad de Carga", options=eq_options)
     
     container_size = "N/A"
-    if modalidad != "Aereo" and ("FCL" in tipo_eq or "FTL" in tipo_eq):
+    if modalidad == "Maritimo" and ("FCL" in tipo_eq or "FTL" in tipo_eq):
         container_size = st.selectbox("Modelo del Contenedor (Filtro THC)", ["20' Standard", "40' HQ / Standard", "Reefer (RF)"])
         
     cantidad = st.number_input("Cantidad de Contenedores / Bultos", min_value=1, value=1)
@@ -183,7 +195,7 @@ if incoterm == "DDP":
         st.caption(f"💵 **Impuestos Provisionales Calculados (Est.):** USD {duties_calculated:,.2f}")
         despacho_total += duties_calculated
 
-# Filtrado estricto por Modalidad y Tipo de Equipamiento
+# Filtrado estricto final
 filtered_df = df[
     (df['Incoterm'] == incoterm) & 
     (df['Modalidad'] == modalidad) & 
