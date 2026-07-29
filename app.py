@@ -42,10 +42,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-title">ARGENTINA GLOBAL TRADE SRL</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">FORWARDER & LOGÍSTICA INTERNACIONAL - SISTEMA DE COTIZACIÓN PROFESIONAL</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">FORWARDER & LOGÍSTICA INTERNACIONAL</div>', unsafe_allow_html=True)
 
-# Base de datos indexada de AGT
+# Base de datos indexada limpia y específica de AGT
 raw_data = [
+    # CFR Marítimo Exportación FCL
     ["CFR", "Maritimo", "Exportacion", "FCL", "THC 20'", "Por Contenedor", "USD", 295.00],
     ["CFR", "Maritimo", "Exportacion", "FCL", "THC 40'", "Por Contenedor", "USD", 335.00],
     ["CFR", "Maritimo", "Exportacion", "FCL", "THC RF", "Por Contenedor", "USD", 350.00],
@@ -57,6 +58,7 @@ raw_data = [
     ["CFR", "Maritimo", "Exportacion", "FCL", "Ingreso SIM", "Por BL", "USD", 50.00],
     ["CFR", "Maritimo", "Exportacion", "FCL", "Precinto", "Por Contenedor", "USD", 10.00],
     
+    # DAP Marítimo Importación FCL
     ["DAP", "Maritimo", "Importacion", "FCL", "THC 20'", "Por Contenedor", "USD", 295.00],
     ["DAP", "Maritimo", "Importacion", "FCL", "THC 40'", "Por Contenedor", "USD", 335.00],
     ["DAP", "Maritimo", "Importacion", "FCL", "THC RF", "Por Contenedor", "USD", 350.00],
@@ -69,8 +71,17 @@ raw_data = [
     ["DAP", "Maritimo", "Importacion", "FCL", "Forwarding Fee", "Por BL", "USD", 95.00],
     ["DAP", "Maritimo", "Importacion", "FCL", "Handling", "Por Contenedor", "USD", 75.00],
     ["DAP", "Maritimo", "Importacion", "FCL", "B/L fee", "Por BL", "USD", 65.00],
+
+    # DAP / DDP / DDU Aéreo Importación
+    ["DAP", "Aereo", "Importacion", "Aereo", "Res. 3244/11", "Por Awb parcial", "USD", 20.00],
+    ["DAP", "Aereo", "Importacion", "Aereo", "Desconsolidación", "Por Bulto Min. USD 20", "USD", 0.50],
+    ["DAP", "Aereo", "Importacion", "Aereo", "Handling aerolínea", "Por AWB", "USD", 210.00],
+    ["DAP", "Aereo", "Importacion", "Aereo", "Manejo de documentación", "Por AWB", "USD", 95.00],
+    ["DAP", "Aereo", "Importacion", "Aereo", "Carga DGR (si aplica)", "Por Awb (MIN)", "USD", 180.00],
+    ["DAP", "Aereo", "Importacion", "Aereo", "Transfer fee (if necessary)", "5%, Min. USD 150", "USD", 150.00],
 ]
 
+# Rellenar combinaciones lógicas dinámicas evitando mezclar Marítimo con Aéreo
 all_incoterms = ["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP", "FAS", "FOB", "CFR", "CIF"]
 all_modalities = ["Maritimo", "Aereo", "Terrestre"]
 all_equipos = ["FCL", "LCL", "FCL / LCL", "Aereo", "FTL", "LTL"]
@@ -85,9 +96,15 @@ for inc in all_incoterms:
             template_inc = inc if inc in ["CFR", "DAP"] else "DAP"
             template_eq = "FCL" if eq in ["FCL", "FCL / LCL", "FTL"] else ("LCL" if eq in ["LCL", "LTL"] else "Aereo")
             
-            matches = [r for r in raw_data if r[0] == template_inc and r[1] == template_mod and r[3] == template_eq]
+            # Forzar a que si el transporte es Aéreo, busque plantillas puramente aéreas
+            if template_mod == "Aereo":
+                matches = [r for r in raw_data if r[1] == "Aereo"]
+            else:
+                matches = [r for r in raw_data if r[0] == template_inc and r[1] == "Maritimo" and r[3] == template_eq]
+                
             if not matches:
                 matches = [r for r in raw_data if r[0] == "DAP" and r[1] == "Maritimo" and r[3] == "FCL"]
+                
             for m in matches:
                 if (inc, mod, "Importacion", eq, m[4]) not in existing_keys:
                     filled_rows.append([inc, mod, "Importacion", eq, m[4], m[5], m[6], m[7]])
@@ -102,7 +119,7 @@ col1, col2 = st.columns([1, 1])
 
 with col1:
     st.markdown('<div class="section-header">1. Parámetros e Información General</div>', unsafe_allow_html=True)
-    ref_num = st.text_input("Número de Referencia Correlativa", value="AGT-2026-4821")
+    ref_num = st.text_input("Número de Referencia", value="AGT-2026-4821")
     
     fecha_cotizacion = st.date_input("Fecha de Emisión de Cotización", value=datetime.today())
     fecha_validez = fecha_cotizacion + timedelta(days=5)
@@ -110,10 +127,19 @@ with col1:
     
     incoterm = st.selectbox("Regla Incoterm", options=all_incoterms, index=4)
     modalidad = st.selectbox("Tipo de Transporte / Vía", options=all_modalities, index=0)
-    tipo_eq = st.selectbox("Tipo de Equipamiento / Modalidad de Carga", options=["FCL", "LCL", "FCL / LCL", "Aereo", "FTL", "LTL"])
+    
+    # Filtrado dinámico de opciones de equipamiento según vía elegida para evitar errores
+    if modalidad == "Aereo":
+        eq_options = ["Aereo"]
+    elif modalidad == "Terrestre":
+        eq_options = ["FTL", "LTL", "FCL / LCL"]
+    else:
+        eq_options = ["FCL", "LCL", "FCL / LCL"]
+        
+    tipo_eq = st.selectbox("Tipo de Equipamiento / Modalidad de Carga", options=eq_options)
     
     container_size = "N/A"
-    if "FCL" in tipo_eq or "FTL" in tipo_eq:
+    if modalidade != "Aereo" and ("FCL" in tipo_eq or "FTL" in tipo_eq):
         container_size = st.selectbox("Modelo del Contenedor (Filtro THC)", ["20' Standard", "40' HQ / Standard", "Reefer (RF)"])
         
     cantidad = st.number_input("Cantidad de Contenedores / Bultos", min_value=1, value=1)
@@ -132,7 +158,7 @@ with col2:
     st.markdown("**🚚 Segmento de Distribución Terrestre / Delivery:**")
     apply_delivery = st.checkbox("¿Aplica Flete Interno / Delivery / Pick Up?", value=True)
     if apply_delivery:
-        del_from = st.text_input("Origen del Flete Local (Desde)", value="Puerto de Buenos Aires")
+        del_from = st.text_input("Origen del Flete Local (Desde)", value="Puerto de Buenos Aires" if modalidad == "Maritimo" else "Aeropuerto de Ezeiza")
         del_to = st.text_input("Destino del Flete Local (Hasta)", value="Planta Industrial del Cliente")
         delivery_cost = st.number_input("Valor del Delivery (USD)", min_value=0.0, value=450.0)
     else:
@@ -163,7 +189,7 @@ if incoterm == "DDP":
         st.caption(f"💵 **Impuestos Provisionales Calculados (Est.):** USD {duties_calculated:,.2f}")
         despacho_total += duties_calculated
 
-# Lógica de filtrado en Base de Datos
+# Filtrado estricto por Modalidad y Tipo de Equipamiento
 filtered_df = df[
     (df['Incoterm'] == incoterm) & 
     (df['Modalidad'] == modalidad) & 
