@@ -81,7 +81,6 @@ raw_data = [
     ["DAP", "Aereo", "Importacion", "Aereo", "Transfer fee (if necessary)", "5%, Min. USD 150", "USD", 150.00],
 ]
 
-# Rellenar combinaciones lógicas dinámicas evitando mezclar Marítimo con Aéreo
 all_incoterms = ["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP", "FAS", "FOB", "CFR", "CIF"]
 all_modalities = ["Maritimo", "Aereo", "Terrestre"]
 all_equipos = ["FCL", "LCL", "FCL / LCL", "Aereo", "FTL", "LTL"]
@@ -96,14 +95,10 @@ for inc in all_incoterms:
             template_inc = inc if inc in ["CFR", "DAP"] else "DAP"
             template_eq = "FCL" if eq in ["FCL", "FCL / LCL", "FTL"] else ("LCL" if eq in ["LCL", "LTL"] else "Aereo")
             
-            # Forzar a que si el transporte es Aéreo, busque plantillas puramente aéreas
             if template_mod == "Aereo":
                 matches = [r for r in raw_data if r[1] == "Aereo"]
             else:
-                matches = [r for r in raw_data if r[0] == template_inc and r[1] == "Maritimo" and r[3] == template_eq]
-                
-            if not matches:
-                matches = [r for r in raw_data if r[0] == "DAP" and r[1] == "Maritimo" and r[3] == "FCL"]
+                matches = [r for r in raw_data if r[0] == template_inc and r[1] == "Maritimo" and r[3] == "FCL"]
                 
             for m in matches:
                 if (inc, mod, "Importacion", eq, m[4]) not in existing_keys:
@@ -128,7 +123,6 @@ with col1:
     incoterm = st.selectbox("Regla Incoterm", options=all_incoterms, index=4)
     modalidad = st.selectbox("Tipo de Transporte / Vía", options=all_modalities, index=0)
     
-    # Filtrado dinámico de opciones de equipamiento según vía elegida para evitar errores
     if modalidad == "Aereo":
         eq_options = ["Aereo"]
     elif modalidad == "Terrestre":
@@ -139,7 +133,7 @@ with col1:
     tipo_eq = st.selectbox("Tipo de Equipamiento / Modalidad de Carga", options=eq_options)
     
     container_size = "N/A"
-    if modalidade != "Aereo" and ("FCL" in tipo_eq or "FTL" in tipo_eq):
+    if modalidad != "Aereo" and ("FCL" in tipo_eq or "FTL" in tipo_eq):
         container_size = st.selectbox("Modelo del Contenedor (Filtro THC)", ["20' Standard", "40' HQ / Standard", "Reefer (RF)"])
         
     cantidad = st.number_input("Cantidad de Contenedores / Bultos", min_value=1, value=1)
