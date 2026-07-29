@@ -3,46 +3,62 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="AGT - Cotizador Avanzado Corporativo", page_icon="🌐", layout="wide")
+st.set_page_config(page_title="AGT - Cotizador Multimodal Profesional", page_icon="🌐", layout="wide")
 
 # Custom CSS for Professional AGT Identity (Navy blue #0B2240, Orange #FF6B00)
 st.markdown("""
 <style>
-    .main-title { font-size: 30px; font-weight: bold; color: #0B2240; text-align: center; margin-bottom: 5px; }
+    .logo-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .logo-img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+    }
+    .main-title { font-size: 26px; font-weight: bold; color: #0B2240; text-align: center; margin-top: 10px; margin-bottom: 5px; }
     .subtitle { font-size: 14px; color: #FF6B00; font-style: italic; font-weight: bold; text-align: center; margin-bottom: 30px;}
     .section-header { font-size: 18px; font-weight: bold; color: #0B2240; border-left: 6px solid #FF6B00; padding-left: 12px; margin-top: 25px; margin-bottom: 15px;}
     .total-box { background-color: #0B2240; color: white; padding: 25px; border-radius: 8px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
     .total-amount { font-size: 36px; font-weight: bold; color: #FF6B00; margin-top: 5px; display: block; }
     .clause-box { background-color: #FFFDF5; border: 1px solid #FFEBAA; padding: 20px; border-radius: 6px; font-size: 14px; color: #333333; line-height: 1.6; }
-    .print-note { font-size: 12px; color: #666666; font-style: italic; margin-top: 10px; text-align: center; }
     
-    /* Estilos del botón de impresión nativo HTML */
     .print-btn {
-        background-color: #ffffff;
-        color: #333333;
-        border: 1px solid #cccccc;
-        padding: 10px 20px;
+        background-color: #FF6B00;
+        color: white;
+        border: none;
+        padding: 12px 24px;
         border-radius: 4px;
         cursor: pointer;
-        font-size: 14px;
+        font-size: 15px;
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        font-weight: 500;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .print-btn:hover {
-        background-color: #f6f6f6;
-        border-color: #adadad;
+        background-color: #e05e00;
     }
 
     @media print {
-        .stButton, .stNumberInput, .stSelectbox, .stTextInput, footer, header, .print-section, iframe { display: none !important; }
+        .stButton, .stNumberInput, .stSelectbox, .stTextInput, footer, header, .print-section, iframe, .stCheckbox { display: none !important; }
         div[data-testid="stSidebar"] { display: none !important; }
-        .main-title, .section-header, .total-box, .clause-box { display: block !important; }
+        .main-title, .section-header, .total-box, .clause-box, .logo-container, .logo-img { display: block !important; }
     }
 </style>
 """, unsafe_allow_html=True)
+
+# Renderizado del Logo Real de AGT usando URL segura
+st.markdown("""
+<div class="logo-container">
+    <img class="logo-img" src="https://raw.githubusercontent.com/ignacio382/CotizadorAGT/main/5_2.png" onerror="this.src='https://i.imgur.com/8K59cM2.png'" alt="AGT Logo">
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="main-title">ARGENTINA GLOBAL TRADE SRL</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">FORWARDER & LOGÍSTICA INTERNACIONAL - SISTEMA DE COTIZACIÓN PROFESIONAL</div>', unsafe_allow_html=True)
 
 # Base de datos limpia de AGT
 raw_data = [
@@ -97,10 +113,6 @@ for r in raw_data:
     filled_rows.append(r)
 
 df = pd.DataFrame(filled_rows, columns=["Incoterm", "Modalidad", "Operacion", "TipoEquipamiento", "Concepto", "Unidad", "Moneda", "Compra"])
-
-# UI Layout Header
-st.markdown('<div class="main-title">AGT - ARGENTINA GLOBAL TRADE SRL</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">COTIZADOR CORPORATIVO INTEGRADO - MÓDULO ADUANAS Y LOGÍSTICA DE DESTINO</div>', unsafe_allow_html=True)
 
 col1, col2 = st.columns([1, 1])
 
@@ -221,10 +233,6 @@ clausula_final += "• **REGULACIONES:** Las cotizaciones están sujetas a varia
 
 st.markdown(f'<div class="clause-box">{clausula_final.replace("\n", "<br>")}</div>', unsafe_allow_html=True)
 
-# Sección de Impresión arreglada con JavaScript directo
+# Sección de Impresión arreglada con JavaScript directo y estilos corporativos
 st.markdown('<div class="section-header print-section">7. Acciones de Exportación e Impresión</div>', unsafe_allow_html=True)
-st.markdown('<p class="print-section">Para imprimir esta cotización con formato corporativo limpio y libre de campos interactivos, presiona el botón inferior o usa el comando estándar del sistema (Ctrl + P o Cmd + P).</p>', unsafe_allow_html=True)
-
-# Inyección de botón HTML real que burla los bloqueos del contenedor
-st.markdown('<div class="print-section"><button class="print-btn" onclick="window.print()">🖨️ Abrir Menú de Impresión / Guardar en PDF</button></div>', unsafe_allow_html=True)
-st.markdown('<div class="print-note print-section">Nota: El diseño web ocultará automáticamente las casillas de entrada y botones al momento de imprimir o generar el PDF comercial.</div>', unsafe_allow_html=True)
+st.markdown('<div class="print-section"><button class="print-btn" onclick="window.print()">🖨️ Imprimir Cotización / Guardar en PDF</button></div>', unsafe_allow_html=True)
