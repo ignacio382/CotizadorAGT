@@ -15,8 +15,30 @@ st.markdown("""
     .total-amount { font-size: 36px; font-weight: bold; color: #FF6B00; margin-top: 5px; display: block; }
     .clause-box { background-color: #FFFDF5; border: 1px solid #FFEBAA; padding: 20px; border-radius: 6px; font-size: 14px; color: #333333; line-height: 1.6; }
     .print-note { font-size: 12px; color: #666666; font-style: italic; margin-top: 10px; text-align: center; }
+    
+    /* Estilos del botón de impresión nativo HTML */
+    .print-btn {
+        background-color: #ffffff;
+        color: #333333;
+        border: 1px solid #cccccc;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .print-btn:hover {
+        background-color: #f6f6f6;
+        border-color: #adadad;
+    }
+
     @media print {
-        .stButton, .stNumberInput, .stSelectbox, .stTextInput, footer, header { display: none !important; }
+        .stButton, .stNumberInput, .stSelectbox, .stTextInput, footer, header, .print-section, iframe { display: none !important; }
+        div[data-testid="stSidebar"] { display: none !important; }
         .main-title, .section-header, .total-box, .clause-box { display: block !important; }
     }
 </style>
@@ -199,9 +221,10 @@ clausula_final += "• **REGULACIONES:** Las cotizaciones están sujetas a varia
 
 st.markdown(f'<div class="clause-box">{clausula_final.replace("\n", "<br>")}</div>', unsafe_allow_html=True)
 
-# Print options integration using browser components
-st.markdown('<div class="section-header">7. Acciones de Exportación e Impresión</div>', unsafe_allow_html=True)
-st.write("Para imprimir esta cotización con formato corporativo limpio y libre de campos interactivos, presiona el botón inferior o usa el comando estándar del sistema (Ctrl + P o Cmd + P).")
-if st.button("🖨️ Abrir Menú de Impresión / Guardar en PDF"):
-    st.markdown('<script>window.print();</script>', unsafe_allow_html=True)
-st.markdown('<div class="print-note">Nota: El diseño web ocultará automáticamente las casillas de entrada y botones al momento de imprimir o generar el PDF comercial.</div>', unsafe_allow_html=True)
+# Sección de Impresión arreglada con JavaScript directo
+st.markdown('<div class="section-header print-section">7. Acciones de Exportación e Impresión</div>', unsafe_allow_html=True)
+st.markdown('<p class="print-section">Para imprimir esta cotización con formato corporativo limpio y libre de campos interactivos, presiona el botón inferior o usa el comando estándar del sistema (Ctrl + P o Cmd + P).</p>', unsafe_allow_html=True)
+
+# Inyección de botón HTML real que burla los bloqueos del contenedor
+st.markdown('<div class="print-section"><button class="print-btn" onclick="window.print()">🖨️ Abrir Menú de Impresión / Guardar en PDF</button></div>', unsafe_allow_html=True)
+st.markdown('<div class="print-note print-section">Nota: El diseño web ocultará automáticamente las casillas de entrada y botones al momento de imprimir o generar el PDF comercial.</div>', unsafe_allow_html=True)
