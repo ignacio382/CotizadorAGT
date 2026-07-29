@@ -40,7 +40,7 @@ st.markdown("""
     .clause-box { background-color: #FFFDF5; border: 1px solid #FFEBAA; padding: 15px; border-radius: 6px; font-size: 13.5px; color: #333333; line-height: 1.5; }
     .print-card { background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 13.5px; }
 
-    /* Nuevo contenedor compacto para el TOTAL */
+    /* Contenedor compacto para el TOTAL */
     .total-row-container {
         display: flex;
         justify-content: flex-end;
@@ -52,7 +52,7 @@ st.markdown("""
         background-color: #0B2240;
         border-radius: 6px;
         max-width: 450px;
-        margin-left: auto; /* Alínea el total a la derecha */
+        margin-left: auto;
     }
     .total-label-text {
         font-size: 18px;
@@ -160,6 +160,10 @@ for r in raw_data:
 
 df = pd.DataFrame(filled_rows, columns=["Incoterm", "Modalidad", "Operacion", "TipoEquipamiento", "Concepto", "Unidad", "Moneda", "Compra"])
 
+# Inicializaciones base por defecto para evitar NameError en modos no marítimos
+tt_days = 0
+free_days = 0
+
 col1, col2 = st.columns([1, 1])
 
 with col1:
@@ -205,8 +209,8 @@ with col1:
         nombre_transporte = st.session_state.get('nombre_transporte', "Hapag-Lloyd - SAN CLEMENTE V.260W")
         etd_date = st.session_state.get('etd_date', datetime.today() + timedelta(days=7))
         eta_date = st.session_state.get('eta_date', datetime.today() + timedelta(days=21))
-        tt_days = st.session_state.get('tt_days', 14)
-        free_days = st.session_state.get('free_days', 7)
+        tt_days = st.session_state.get('tt_days', 0)
+        free_days = st.session_state.get('free_days', 0)
         
         st.markdown(f"""
         <div class="print-card">
