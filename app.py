@@ -27,7 +27,7 @@ st.markdown("""
 
     /* Reglas para ocultar la interfaz interactiva al momento de imprimir o guardar PDF */
     @media print {
-        .stButton, .stNumberInput, .stSelectbox, .stTextInput, footer, header, .print-section, iframe, .stCheckbox, div[data-testid="stHeader"] { display: none !important; }
+        .stButton, .stNumberInput, .stSelectbox, .stTextInput, .stDateInput, footer, header, .print-section, iframe, .stCheckbox, div[data-testid="stHeader"], div[data-testid="stDateInput"] { display: none !important; }
         div[data-testid="stSidebar"] { display: none !important; }
         .main-title, .section-header, .total-box, .clause-box, .logo-container, .logo-img { display: block !important; }
     }
@@ -149,6 +149,18 @@ with col1:
         
     cantidad = st.number_input("Cantidad de Contenedores / Bultos", min_value=1, value=1)
     
+    # NUEVO: Bloque dinámico para Buque / Vuelo / Camión y Fechas operativas
+    st.markdown("**🚢 / ✈️ / 🚛 Programación del Medio de Transporte:**")
+    if modalidad == "Maritimo":
+        nombre_transporte = st.text_input("Línea Marítima / Buque y Viaje", value="Hapag-Lloyd - SAN CLEMENTE V.260W")
+    elif modalidad == "Aereo":
+        nombre_transporte = st.text_input("Línea Aérea / Nro. de Vuelo", value="Lufthansa - LH511")
+    else:
+        nombre_transporte = st.text_input("Empresa de Transporte / Nro. de Patente", value="Transportes Internacionales SRL - CTR-765")
+        
+    etd_date = st.date_input("Fecha estimada de Salida (ETD)", value=datetime.today() + timedelta(days=7))
+    eta_date = st.date_input("Fecha estimada de Llegada (ETA)", value=datetime.today() + timedelta(days=21))
+
     if modalidad == "Maritimo":
         st.markdown("**⏱️ Datos de Tránsito Marítimo:**")
         tt_days = st.number_input("Transit Time (TT en días)", min_value=0, value=14)
@@ -237,9 +249,12 @@ st.markdown(f'''
 </div>
 ''', unsafe_allow_html=True)
 
-# Cláusulas legales operativas
+# Cláusulas legales operativas con los nuevos datos de buque/vuelo y fechas
 st.markdown('<div class="section-header">6. Términos Legales, Validez y Validez del Servicio</div>', unsafe_allow_html=True)
 clausula_final = f"• **VALIDEZ TEMPORAL:** Esta propuesta es válida hasta el **{fecha_validez.strftime('%d/%m/%Y')}** (5 días desde su emisión).\n"
+clausula_final += f"• **TRANSPORTE ASIGNADO:** Medio coordinado vía *{nombre_transporte}*.\n"
+clausula_final += f"• **CRONOGRAMA ESTIMADO:** Fecha estimada de salida (ETD): **{etd_date.strftime('%d/%m/%Y')}** | Fecha estimada de arribo (ETA): **{eta_date.strftime('%d/%m/%Y')}**.\n"
+
 if modalidad == "Maritimo":
     clausula_final += f"• **TIEMPOS DE DESTINO:** Transit Time estimado en **{tt_days} días** con un período de **{free_days} días libres** en puerto de destino.\n"
 if apply_delivery:
