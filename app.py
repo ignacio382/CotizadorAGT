@@ -54,8 +54,6 @@ st.markdown('<div class="subtitle">FORWARDER & LOGÍSTICA INTERNACIONAL</div>', 
 # CONTROL DE IMPRESIÓN (INTERRUPTOR DE SEGURIDAD)
 st.sidebar.markdown("### 🖨️ Panel de Impresión")
 modo_impresion = st.sidebar.checkbox("Activar Modo Vista de Impresión (PDF)", value=False)
-if modo_impresion:
-    st.sidebar.success("Modo Impresión Activo. Los controles interactivos se han convertido en texto plano para el PDF.")
 
 # Base de datos indexada limpia de AGT
 raw_data = [
@@ -165,7 +163,6 @@ with col1:
             tt_days = st.number_input("Transit Time (TT en días)", min_value=0, value=14)
             free_days = st.number_input("Días Libres de Demoras en Destino", min_value=0, value=7)
     else:
-        # Inicializadores de sesión para el modo impresión congelado
         ref_num = st.session_state.get('ref_num', "AGT-2026-4821")
         fecha_cotizacion = st.session_state.get('fecha_cotizacion', datetime.today())
         incoterm = st.session_state.get('incoterm', "DAP")
@@ -179,7 +176,6 @@ with col1:
         tt_days = st.session_state.get('tt_days', 14)
         free_days = st.session_state.get('free_days', 7)
         
-        # Renderizado de texto plano indestructible para el PDF
         st.markdown(f"""
         <div class="print-card">
             <b>Referencia:</b> {ref_num}<br>
@@ -207,7 +203,6 @@ with col2:
             delivery_cost = 0.0
             del_from, del_to = "N/A", "N/A"
             
-        # Guardar estados en caché para el modo de congelado
         st.session_state['ref_num'] = ref_num
         st.session_state['fecha_cotizacion'] = fecha_cotizacion
         st.session_state['incoterm'] = incoterm
@@ -262,7 +257,6 @@ if incoterm == "DDP":
         valor_cif = flete_intl + 20000.0
         duties_calculated = valor_cif * (duty_pct + iva_pct + iva_adicional + other_taxes)
         despacho_total = honorarios + gastos_despacho + digitalizacion + duties_calculated
-        
         st.session_state['despacho_total'] = despacho_total
     else:
         despacho_total = st.session_state.get('despacho_total', 0.0)
@@ -292,7 +286,19 @@ if container_size != "N/A" and not filtered_df.empty:
 st.markdown('<div class="section-header">4. Conceptos Fijos Locales desde Base de Datos</div>', unsafe_allow_html=True)
 if not filtered_df.empty:
     filtered_df['Total'] = filtered_df['Compra'] * cantidad
-    st.dataframe(filtered_df[['Concepto', 'Unidad', 'Moneda', 'Compra', 'Total']], use_container_width=True, hide_index=True)
+    
+    # Formateo explícito de las columnas numéricas para forzar a Streamlit a renderizarlas correctamente
+    filtered_df['Compra_Formatted'] = filtered_df['Compra'].apply(lambda x: f"USD {x:,.2f}")
+    filtered_df['Total_Formatted'] = filtered_df['Total'].apply(lambda x: f"USD {x:,.2f}")
+    
+    # Mostrar tabla usando las columnas formateadas como texto plano indestructible
+    st.dataframe(
+        filtered_df[['Concepto', 'Unidad', 'Moneda', 'Compra_Formatted', 'Total_Formatted']].rename(
+            columns={'Compra_Formatted': 'Compra', 'Total_Formatted': 'Total'}
+        ), 
+        use_container_width=True, 
+        hide_index=True
+    )
     fijos_total = filtered_df['Total'].sum()
 else:
     fijos_total = 0.0
