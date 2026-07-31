@@ -55,6 +55,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+all_incoterms = ["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP", "FAS", "FOB", "CFR", "CIF"]
+
 col1, col2 = st.columns([1, 1])
 
 with col1:
@@ -63,6 +65,7 @@ with col1:
         ref_num = st.text_input("Número de Referencia", value="AGT-2026-4821")
         fecha_cotizacion = st.date_input("Fecha de Emisión", value=datetime.today())
         operacion = st.selectbox("Dirección del Flujo", ["Importacion", "Exportacion"])
+        incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=4)
         modalidad = st.selectbox("Vía de Transporte", ["Maritimo", "Aereo", "Terrestre"])
         
         if modalidad == "Maritimo": eq_options = ["FCL", "LCL"]
@@ -76,7 +79,6 @@ with col1:
             
         cantidad = st.number_input("Cantidad de Unidades (Contenedores/Bultos/CRT)", min_value=1, value=1)
         
-        # Parámetros dinámicos para cálculos de mínimos de tus tablas
         ton_m3 = 1.0
         peso_kg = 0.0
         if tipo_eq == "LCL":
@@ -101,6 +103,7 @@ with col1:
         ref_num = st.session_state.get('ref_num', "AGT-2026-4821")
         fecha_cotizacion = st.session_state.get('fecha_cotizacion', datetime.today())
         operacion = st.session_state.get('operacion', "Importacion")
+        incoterm = st.session_state.get('incoterm', "DAP")
         modalidad = st.session_state.get('modalidad', "Maritimo")
         tipo_eq = st.session_state.get('tipo_eq', "FCL")
         container_size = st.session_state.get('container_size', "40' HQ / Standard")
@@ -117,7 +120,8 @@ with col1:
         <div class="print-card">
             <b>Referencia:</b> {ref_num}<br>
             <b>Fecha Emisión:</b> {fecha_cotizacion.strftime('%d/%m/%Y')}<br>
-            <b>Flujo:</b> {operacion} | <b>Vía:</b> {modalidad} ({tipo_eq})<br>
+            <b>Flujo:</b> {operacion} | <b>Condición de Venta:</b> {incoterm}<br>
+            <b>Vía:</b> {modalidad} ({tipo_eq})<br>
             <b>Equipo/Medida:</b> {container_size if modalidad=='Maritimo' and tipo_eq=='FCL' else f'{ton_m3} w/m' if tipo_eq=='LCL' else f'{peso_kg} Kg' if modalidad=='Aereo' else 'Estandar'} | <b>Cantidad:</b> {cantidad}<br>
             <b>Medio asignado:</b> {nombre_transporte}<br>
             <b>Cronograma:</b> ETD: {etd_date.strftime('%d/%m/%Y')} | ETA: {eta_date.strftime('%d/%m/%Y')}
@@ -141,6 +145,7 @@ with col2:
         st.session_state['ref_num'] = ref_num
         st.session_state['fecha_cotizacion'] = fecha_cotizacion
         st.session_state['operacion'] = operacion
+        st.session_state['incoterm'] = incoterm
         st.session_state['modalidad'] = modalidad
         st.session_state['tipo_eq'] = tipo_eq
         st.session_state['container_size'] = container_size
@@ -174,8 +179,33 @@ with col2:
         </div>
         """, unsafe_allow_html=True)
 
+# Módulo Despacho de Aduana Especial si es DDP
+despacho_total = 0.0
+if incoterm == "DDP":
+    st.markdown('<div class="section-header">3. Módulo Despacho de Aduana (DDP)</div>', unsafe_allow_html=True)
+    if not modo_impresion:
+        honorarios = st.number_input("Honorarios Despachante (USD)", min_value=0.0, value=200.0)
+        gastos_despacho = st.number_input("Gastos Operativos (USD)", min_value=0.0, value=120.0)
+        digitalizacion = st.number_input("Tasa Digitalización SIM (USD)", min_value=0.0, value=45.0)
+        
+        duty_pct = st.number_input("Duty (%)", min_value=0.0, max_value=100.0, value=14.0) / 100.0
+        iva_pct = st.number_input("IVA (%)", min_value=0.0, max_value=100.0, value=21.0) / 100.0
+        iva_adicional = st.number_input("IVA Adicional (%)", min_value=0.0, max_value=100.0, value=20.0) / 100.0
+        other_taxes = st.number_input("Otros Impuestos (%)", min_value=0.0, max_value=100.0, value=3.0) / 100.0
+        
+        valor_cif = flete_intl + 20000.0
+        duties_calculated = valor_cif * (duty_pct + iva_pct + iva_adicional + other_taxes)
+        despacho_total = honorarios + gastos_despacho + digitalizacion + duties_calculated
+        st.session_state['despacho_total'] = despacho_total
+    else:
+        despacho_total = st.session_state.get('despacho_total', 0.0)
+        st.markdown(f"""
+        <div class="print-card">
+            <b>Despacho de Aduana + Impuestos Nacionalización:</b> USD {despacho_total:,.2f}
+        </div>
+        """, unsafe_allow_html=True)
+
 # ----------------- BASE DE DATOS EXACTA DE LAS IMÁGENES -----------------
-# Estructura: [Destinatario, Vía, Flujo, Carga, Concepto, UnidadBase, Precio20, Precio40, PrecioRF, AplicaIVA]
 tarifario_AGT = [
     # IMPO MARÍTIMO FCL (Agentes y Clientes)
     ["Agente", "Maritimo", "Importacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 350.00, False],
@@ -217,7 +247,7 @@ tarifario_AGT = [
     ["Cliente", "Maritimo", "Importacion", "LCL", "Handling marítima", "x BL", 35.00, 35.00, 35.00, True],
     ["Cliente", "Maritimo", "Importacion", "LCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, True],
 
-    # EXPO MARÍTIMO FCL (Agentes y Clientes heredan este estándar)
+    # EXPO MARÍTIMO FCL (Agentes y Clientes)
     ["Agente", "Maritimo", "Exportacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 370.00, False],
     ["Agente", "Maritimo", "Exportacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, False],
     ["Agente", "Maritimo", "Exportacion", "FCL", "Logistics fee", "x contenedor", 75.00, 75.00, 75.00, False],
@@ -276,7 +306,7 @@ tarifario_AGT = [
     ["Cliente", "Aereo", "Exportacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, True],
     ["Cliente", "Aereo", "Exportacion", "Aereo", "Carga DGR (si aplica)", "x guía (MIN)", 180.00, 180.00, 180.00, True],
 
-    # TERRESTRES (Aplica a IMPO y EXPO por igual según tablas)
+    # TERRESTRES (FTL / LTL para Impo y Expo)
     ["Agente", "Terrestre", "Importacion", "FTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
     ["Agente", "Terrestre", "Importacion", "FTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, False],
     ["Agente", "Terrestre", "Importacion", "LTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
@@ -298,7 +328,6 @@ tarifario_AGT = [
 
 df_base = pd.DataFrame(tarifario_AGT, columns=["Destinatario", "Modalidad", "Operacion", "TipoEquipamiento", "Concepto", "UnidadBase", "Precio20", "Precio40", "PrecioRF", "AplicaIVA"])
 
-# Filtrado estricto en la base de datos
 filtered_df = df_base[
     (df_base['Destinatario'] == destinatario) & 
     (df_base['Modalidad'] == modalidad) & 
@@ -306,7 +335,7 @@ filtered_df = df_base[
     (df_base['TipoEquipamiento'] == tipo_eq)
 ].copy()
 
-# CÁLCULOS LOGÍSTICOS AVANZADOS SEGÚN LAS REGLAS DE TUS IMÁGENES
+# CÁLCULOS LOGÍSTICOS AVANZADOS SEGÚN LAS REGLAS DE LAS IMÁGENES
 fijos_total = 0.0
 fijos_iva = 0.0
 rows_to_render = []
@@ -316,13 +345,11 @@ if not filtered_df.empty:
         concepto = row['Concepto']
         unidad = row['UnidadBase']
         
-        # 1. Selección de precio base por tipo de contenedor
         precio_base = row['Precio20']
         if modalidad == "Maritimo" and tipo_eq == "FCL":
             if container_size == "40' HQ / Standard": precio_base = row['Precio40']
             elif container_size == "Reefer (RF)": precio_base = row['PrecioRF']
             
-        # 2. Lógica de cálculo según la unidad de la imagen
         subtotal_item = precio_base * cantidad
         
         if "tn/m3 min usd 70" in unidad:
@@ -332,17 +359,14 @@ if not filtered_df.empty:
             calculo_agp = precio_base * ton_m3 * cantidad
             subtotal_item = max(4.0 * cantidad, calculo_agp)
         elif "x bulto min usd 20" in unidad:
-            # Desconsolidación aérea asumimos cantidad como número de bultos
             calculo_aereo = precio_base * cantidad
             subtotal_item = max(20.0, calculo_aereo)
         elif "3% s/AWB min usd 50" in unidad:
             subtotal_item = max(50.0, flete_intl * 0.03)
         elif "x guía min usd 20" in unidad:
-            # TCA Exportación aérea basado en peso
             calculo_tca = (0.02 * peso_kg + 10) * cantidad
             subtotal_item = max(20.0 * cantidad, calculo_tca)
             
-        # Calcular IVA si corresponde al perfil Cliente en Argentina
         iva_item = subtotal_item * 0.21 if row['AplicaIVA'] else 0.0
         
         fijos_total += subtotal_item
@@ -382,9 +406,9 @@ clausula_final += f"• **TRANSPORTE ASIGNADO:** Medio coordinado vía *{nombre_
 clausula_final += f"• **CRONOGRAMA ESTIMADO:** ETD: **{etd_date.strftime('%d/%m/%Y')}** | ETA: **{eta_date.strftime('%d/%m/%Y')}**.\n"
 
 if modalidad == "Maritimo":
-    clausula_final += f"• **TIEMPOS DE DESTINO:** Transit Time estimado en **{tt_days} días** con un período de **{free_days} días libres** en destino.\n"
+    clausula_final += f"• **TIEMPOS DE DESTINO:** Transit Time estimado en **{st.session_state.get('tt_days', 14)} días** con un período de **{st.session_state.get('free_days', 7)} días libres** en destino.\n"
 if apply_delivery:
-    clausula_final += f"• **ENTREGA TERRESTRE:** Delivery programado desde *{del_from}* hasta *{del_to}* por un importe de USD {delivery_cost:,.2f}.\n"
+    clausula_final += f"• **ENTREGA TERRESTRE:** Delivery programado desde *{st.session_state.get('del_from', 'Origen')}* hasta *{st.session_state.get('del_to', 'Destino')}* por un importe de USD {delivery_cost:,.2f}.\n"
 clausula_final += "• **REGULACIONES:** Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
 st.markdown(f'<div class="clause-box">{clausula_final.replace("\n", "<br>")}</div>', unsafe_allow_html=True)
