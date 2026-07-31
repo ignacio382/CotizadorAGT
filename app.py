@@ -6,28 +6,29 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="AGT - Cotizador Multimodal Profesional", page_icon="🌐", layout="wide")
 
-# Estilos visuales con la identidad de AGT optimizados para espacio
+# Estilos visuales optimizados al máximo para el espacio vertical
 st.markdown("""
 <style>
     .header-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: 8px;
+        padding-bottom: 6px;
         border-bottom: 2px solid #0B2240;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
+        flex-wrap: nowrap; /* Fuerza a mantenerse en un solo renglón */
     }
     .logo-right { 
-        max-width: 220px; /* Logo más chico para ahorrar espacio vertical */
+        max-width: 180px; /* Logo más chico para ganar espacio y asegurar una sola línea */
         height: auto; 
         border-radius: 2px; 
     }
     .quote-title-left { 
-        font-size: 20px; /* Letra un poco más chica para asegurar una sola línea */
+        font-size: 18px; /* Tamaño de letra optimizado */
         font-weight: bold; 
         color: #0B2240; 
         font-family: 'Segoe UI', sans-serif;
-        letter-spacing: 0.5px;
+        white-space: nowrap; /* Evita que el texto salte de línea */
     }
     .section-header { 
         font-size: 15px; 
@@ -61,7 +62,7 @@ st.sidebar.markdown("### 👥 Perfil Comercial")
 destinatario = st.sidebar.selectbox("Tipo de Destinatario", ["Cliente", "Agente"])
 modo_impresion = st.sidebar.checkbox("Activar Modo Vista de Impresión (PDF)", value=False)
 
-# Cabecera optimizada en una sola línea
+# Cabecera forzada en un solo renglón compacto
 st.markdown(f"""
 <div class="header-container">
     <div class="quote-title-left">COTIZACIÓN DE EMBARQUE</div>
@@ -145,7 +146,7 @@ with col1:
         """, unsafe_allow_html=True)
 
 with col2:
-    st.markdown('<div class="section-header">2. Tarifas Flotantes y Distribución</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">2. Tarifas</div>', unsafe_allow_html=True)
     if not modo_impresion:
         flete_intl = st.number_input("Flete Internacional Base (USD)", min_value=0.0, value=1850.0)
         gastos_term = st.number_input("Gastos Terminal / Depósito (USD)", min_value=0.0, value=650.0)
@@ -389,8 +390,8 @@ if not filtered_df.empty:
             "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
         })
 
-# Título de sección simplificado
-st.markdown('<div class="section-header">4. Conceptos Fijos Loces</div>', unsafe_allow_html=True)
+# Título corregido a "Conceptos Fijos Locales"
+st.markdown('<div class="section-header">4. Conceptos Fijos Locales</div>', unsafe_allow_html=True)
 if rows_to_render:
     st.dataframe(pd.DataFrame(rows_to_render), use_container_width=True, hide_index=True)
 else:
@@ -400,10 +401,10 @@ else:
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
-# TOTAL REDISEÑADO COMPACTO ALINEADO A LA DERECHA
+# TOTAL REDISEÑADO LIMPIO SIN TEXTO DE IVA
 st.markdown(f'''
 <div class="total-row-container">
-    <div class="total-label-text">TOTAL {"+ IVA" if destinatario=="Cliente" else ""}</div>
+    <div class="total-label-text">TOTAL</div>
     <div class="total-price-text">USD {gran_total:,.2f}</div>
 </div>
 ''', unsafe_allow_html=True)
@@ -422,7 +423,7 @@ clausula_final += "• **REGULACIONES:** Las cotizaciones están sujetas a varia
 
 st.markdown('<div class="clause-box">' + clausula_final.replace('\n', '<br>') + '</div>', unsafe_allow_html=True)
 
-# SECCIÓN DE BOTÓN DIRECTO SIN TÍTULOS REPETITIVOS
+# Sección de botón de impresión directo
 components.html(
     """
     <style>
