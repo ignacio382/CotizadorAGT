@@ -9,7 +9,6 @@ st.set_page_config(page_title="AGT - Cotizador Multimodal Profesional", page_ico
 # Estilos visuales con la identidad de AGT optimizados para pantalla e impresión directa legible
 st.markdown("""
 <style>
-    /* Estilos para visualización en pantalla normal */
     .header-container {
         display: flex;
         justify-content: space-between;
@@ -41,6 +40,7 @@ st.markdown("""
         margin-bottom: 10px;
     }
     .clause-box { background-color: #FFFDF5; border: 1px solid #FFEBAA; padding: 12px; border-radius: 6px; font-size: 13.0px; color: #333333; line-height: 1.4; }
+    .print-card { background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 13.0px; }
     
     .total-row-container {
         display: flex; justify-content: flex-end; align-items: center; gap: 15px;
@@ -50,21 +50,15 @@ st.markdown("""
     .total-label-text { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
     .total-price-text { font-size: 24px; font-weight: bold; color: #FF6B00; }
 
-    /* REGLAS DE IMPRESIÓN DIRECTA AVANZADA (Fuerza tamaño legible y limpia el PDF) */
     @media print {
-        /* Ocultar barra lateral de Streamlit, encabezados web y el botón de imprimir */
-        [data-testid="stSidebar"], [data-testid="stHeader"], footer, header, .print-section, iframe { 
+        [data-testid="stSidebar"], [data-testid="stHeader"], footer, header, .print-section, iframe, .stCheckbox { 
             display: none !important; 
         }
-        
-        /* Asegurar que la tipografía en el PDF no salga minúscula ni borrosa */
         body, p, div, span, td, th {
-            font-size: 13.5pt !important; /* Agranda la letra en la hoja física o PDF */
+            font-size: 13.5pt !important; 
             color: #111111 !important;
             font-family: 'Segoe UI', Arial, sans-serif !important;
         }
-        
-        /* Modificar el comportamiento de las casillas de entrada de datos (inputs) al imprimir */
         input, select, textarea {
             border: none !important;
             background: transparent !important;
@@ -73,18 +67,15 @@ st.markdown("""
             font-weight: bold !important;
             padding: 0 !important;
         }
-        
-        /* Ocultar flechas de selección de los desplegables de Streamlit en la hoja impresa */
         div[data-baseweb="select"] button, div[role="button"] {
             display: none !important;
         }
-        
-        /* Mantener bloques clave visibles en su posición corporativa */
         .header-container { display: flex !important; border-bottom: 2px solid #0B2240 !important; }
         .logo-right { display: block !important; max-width: 180px !important; }
         .quote-title-left { display: block !important; font-size: 18pt !important; }
         .section-header { display: flex !important; border-left: 5px solid #FF6B00 !important; font-size: 14pt !important; }
         .clause-box { display: block !important; background-color: #FFFDF5 !important; border: 1px solid #FFEBAA !important; }
+        .print-card { display: block !important; background-color: #F8FAFC !important; border: 1px solid #E2E8F0 !important; }
         .total-row-container { display: flex !important; background-color: #0B2240 !important; }
         .total-price-text { color: #FF6B00 !important; font-size: 22pt !important; }
     }
@@ -95,7 +86,7 @@ st.markdown("""
 st.sidebar.markdown("### 👥 Perfil Comercial")
 destinatario = st.sidebar.selectbox("Tipo de Destinatario", ["Cliente", "Agente"])
 
-# Cabecera forzada en un solo renglón compacto
+# Cabecera
 st.markdown(f"""
 <div class="header-container">
     <div class="quote-title-left">COTIZACIÓN DE EMBARQUE</div>
@@ -162,24 +153,49 @@ with col2:
     else:
         delivery_cost, del_from, del_to = 0.0, "N/A", "N/A"
 
-# Módulo Despacho de Aduana Especial si es DDP
-despacho_total = 0.0
-if incoterm == "DDP":
-    st.markdown('<div class="section-header">3. Módulo Despacho de Aduana (DDP)</div>', unsafe_allow_html=True)
-    honorarios = st.number_input("Honorarios Despachante (USD)", min_value=0.0, value=200.0)
-    gastos_despacho = st.number_input("Gastos Operativos (USD)", min_value=0.0, value=120.0)
-    digitalizacion = st.number_input("Tasa Digitalización SIM (USD)", min_value=0.0, value=45.0)
+    # MÓDULO INTERACTIVO DE CUSTOMS BROKER & TAXES
+    st.markdown('<div class="section-header">3. Servicios de Aduana</div>', unsafe_allow_html=True)
+    apply_broker = st.checkbox("¿Aplica Customs Broker?", value=False)
     
-    duty_pct = st.number_input("Duty (%)", min_value=0.0, max_value=100.0, value=14.0) / 100.0
-    iva_pct = st.number_input("IVA (%)", min_value=0.0, max_value=100.0, value=21.0) / 100.0
-    iva_adicional = st.number_input("IVA Adicional (%)", min_value=0.0, max_value=100.0, value=20.0) / 100.0
-    other_taxes = st.number_input("Otros Impuestos (%)", min_value=0.0, max_value=100.0, value=3.0) / 100.0
+    broker_cost = 0.0
+    taxes_cost = 0.0
     
-    valor_cif = flete_intl + 20000.0
-    duties_calculated = valor_cif * (duty_pct + iva_pct + iva_adicional + other_taxes)
-    despacho_total = honorarios + gastos_despacho + digitalizacion + duties_calculated
+    if apply_broker:
+        label_valor = "Valor FOB de la Mercadería (USD)" if operacion == "Exportacion" else "Valor CIF de la Mercadería (USD)"
+        valor_mercaderia = st.number_input(label_valor, min_value=0.0, value=25000.0, step=1000.0)
+        
+        honorarios_calculados = valor_mercaderia * 0.007
+        honorarios_finales = max(275.0, honorarios_calculados)
+        gastos_despacho_fijos = 150.0
+        digitalizacion_fija = 65.0
+        
+        broker_total_item = honorarios_finales + gastos_despacho_fijos + digitalizacion_fija
+        broker_cost = broker_total_item
+        
+        tipo_honorario_lbl = "0.7% Valor FOB (Min 275)" if operacion == "Exportacion" else "0.7% Valor CIF (Min 275)"
+        st.caption(f"📋 **Despacho Aduanero ({operacion}):** Hon. Despacho: USD {honorarios_finales:,.2f} ({tipo_honorario_lbl}) | Gastos: USD 150.00 | Digitalización: USD 65.00")
+        
+        apply_taxes = st.checkbox("¿Aplica liquidación de Duties & Taxes?", value=False)
+        if apply_taxes:
+            st.markdown("**Tasas Impositivas (Editables según HTS / PA):**")
+            # Cajas numéricas para que el usuario pueda escribir/modificar los porcentajes libremente
+            col_t1, col_t2 = st.columns(2)
+            with col_t1:
+                input_duty = st.number_input("Duty / Arancel (%)", min_value=0.0, value=16.0, step=0.5)
+                input_vat = st.number_input("VAT / IVA (%)", min_value=0.0, value=10.5, step=0.5)
+            with col_t2:
+                input_add_vat = st.number_input("Additional VAT / IVA Adic. (%)", min_value=0.0, value=10.0, step=0.5)
+                input_other = st.number_input("Other taxes / Tasa Est. (%)", min_value=0.0, value=8.5, step=0.5)
+            
+            tax_duty = valor_mercaderia * (input_duty / 100)
+            tax_vat = valor_mercaderia * (input_vat / 100)
+            tax_add_vat = valor_mercaderia * (input_add_vat / 100)
+            tax_other = valor_mercaderia * (input_other / 100)
+            
+            taxes_cost = tax_duty + tax_vat + tax_add_vat + tax_other
+            st.caption(f"💵 **Total Impuestos Proyectados:** USD {taxes_cost:,.2f}")
 
-# ----------------- BASE DE DATOS TARIFARIO SEGÚN PERFIL -----------------
+# ----------------- BASE DE DATOS TARIFARIO -----------------
 tarifario_AGT = [
     ["Agente", "Maritimo", "Importacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 350.00, False],
     ["Agente", "Maritimo", "Importacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, False],
@@ -347,14 +363,28 @@ if not filtered_df.empty:
             "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
         })
 
+# Inyección dinámica de filas de Despacho de Aduana si está activo
+if apply_broker:
+    tipo_h_lbl = "0.7% FOB (Min 275)" if operacion == "Exportacion" else "0.7% CIF (Min 275)"
+    rows_to_render.append({"Concepto": "Hon. Despacho", "Unidad": tipo_h_lbl, "Moneda": "USD", "Tarifa Base": "Variable", "Subtotal": f"USD {max(275.0, valor_mercaderia*0.007):,.2f}", "IVA (21%)": "Exento"})
+    rows_to_render.append({"Concepto": "Gastos de despacho", "Unidad": "x Operación", "Moneda": "USD", "Tarifa Base": "USD 150.00", "Subtotal": "USD 150.00", "IVA (21%)": "Exento"})
+    rows_to_render.append({"Concepto": "Digitalización", "Unidad": "x Operación", "Moneda": "USD", "Tarifa Base": "USD 65.00", "Subtotal": "USD 65.00", "IVA (21%)": "Exento"})
+
+# Inyección dinámica de Duties & Taxes
+if apply_broker and 'apply_taxes' in locals() and apply_taxes:
+    rows_to_render.append({"Concepto": "Duty (Derechos de Importación)", "Unidad": f"{input_duty}% base", "Moneda": "USD", "Tarifa Base": f"{input_duty}%", "Subtotal": f"USD {tax_duty:,.2f}", "IVA (21%)": "Exento"})
+    rows_to_render.append({"Concepto": "VAT (IVA)", "Unidad": f"{input_vat}% base", "Moneda": "USD", "Tarifa Base": f"{input_vat}%", "Subtotal": f"USD {tax_vat:,.2f}", "IVA (21%)": "Exento"})
+    rows_to_render.append({"Concepto": "Additional VAT (IVA Adicional)", "Unidad": f"{input_add_vat}% base", "Moneda": "USD", "Tarifa Base": f"{input_add_vat}%", "Subtotal": f"USD {tax_add_vat:,.2f}", "IVA (21%)": "Exento"})
+    rows_to_render.append({"Concepto": "Other taxes (Otros Impuestos)", "Unidad": f"{input_other}% base", "Moneda": "USD", "Tarifa Base": f"{input_other}%", "Subtotal": f"USD {tax_other:,.2f}", "IVA (21%)": "Exento"})
+
 st.markdown('<div class="section-header">4. Conceptos Fijos Locales</div>', unsafe_allow_html=True)
 if rows_to_render:
     st.dataframe(pd.DataFrame(rows_to_render), use_container_width=True, hide_index=True)
 else:
     st.info("No se registran cargos fijos adicionales parametrizados para este perfil.")
 
-# Totales Consolidados finales
-gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost
+# Totales Consolidados finales incluyendo Aduana e Impuestos
+gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + taxes_cost
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
 # TOTAL REDISEÑADO LIMPIO
@@ -375,11 +405,14 @@ if modalidad == "Maritimo":
     clausula_final += f"• **TIEMPOS DE DESTINO:** Transit Time estimado en **{tt_days} días** con un período de **{free_days} días libres** en destino.\n"
 if apply_delivery:
     clausula_final += f"• **ENTREGA TERRESTRE:** Delivery programado desde *{del_from}* hasta *{del_to}* por un importe de USD {delivery_cost:,.2f}.\n"
+if apply_broker:
+    clausula_final += f"• **DESPACHO DE ADUANA:** Coordinado bajo modalidad {operacion} por cuenta de AGT Broker.\n"
+
 clausula_final += "• **REGULACIONES:** Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
 st.markdown('<div class="clause-box">' + clausula_final.replace('\n', '<br>') + '</div>', unsafe_allow_html=True)
 
-# Sección de botón de impresión directo (Sujeta a iframe bypass nativo)
+# Sección de botón de impresión directo
 components.html(
     """
     <style>
