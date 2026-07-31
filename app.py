@@ -6,32 +6,48 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="AGT - Cotizador Multimodal Profesional", page_icon="🌐", layout="wide")
 
-# Estilos visuales con la identidad de AGT
+# Estilos visuales con la identidad de AGT optimizados para espacio
 st.markdown("""
 <style>
     .header-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: 10px;
+        padding-bottom: 8px;
         border-bottom: 2px solid #0B2240;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
-    .logo-right { max-width: 280px; height: auto; border-radius: 2px; }
-    .quote-title-left { font-size: 24px; font-weight: bold; color: #0B2240; font-family: 'Segoe UI', sans-serif; }
+    .logo-right { 
+        max-width: 220px; /* Logo más chico para ahorrar espacio vertical */
+        height: auto; 
+        border-radius: 2px; 
+    }
+    .quote-title-left { 
+        font-size: 20px; /* Letra un poco más chica para asegurar una sola línea */
+        font-weight: bold; 
+        color: #0B2240; 
+        font-family: 'Segoe UI', sans-serif;
+        letter-spacing: 0.5px;
+    }
     .section-header { 
-        font-size: 16px; font-weight: bold; color: #0B2240; border-left: 5px solid #FF6B00; 
-        padding-left: 10px; margin-top: 20px; margin-bottom: 12px;
+        font-size: 15px; 
+        font-weight: bold; 
+        color: #0B2240; 
+        border-left: 5px solid #FF6B00; 
+        padding-left: 10px; 
+        margin-top: 15px; 
+        margin-bottom: 10px;
     }
-    .clause-box { background-color: #FFFDF5; border: 1px solid #FFEBAA; padding: 15px; border-radius: 6px; font-size: 13.5px; color: #333333; line-height: 1.5; }
-    .print-card { background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 13.5px; }
+    .clause-box { background-color: #FFFDF5; border: 1px solid #FFEBAA; padding: 12px; border-radius: 6px; font-size: 13.0px; color: #333333; line-height: 1.4; }
+    .print-card { background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 13.0px; }
+    
     .total-row-container {
         display: flex; justify-content: flex-end; align-items: center; gap: 15px;
-        margin-top: 25px; margin-bottom: 25px; padding: 12px 25px;
-        background-color: #0B2240; border-radius: 6px; max-width: 450px; margin-left: auto;
+        margin-top: 20px; margin-bottom: 20px; padding: 10px 20px;
+        background-color: #0B2240; border-radius: 6px; max-width: 400px; margin-left: auto;
     }
-    .total-label-text { font-size: 18px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
-    .total-price-text { font-size: 26px; font-weight: bold; color: #FF6B00; }
+    .total-label-text { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
+    .total-price-text { font-size: 24px; font-weight: bold; color: #FF6B00; }
 
     @media print {
         .stButton, .stNumberInput, .stSelectbox, .stTextInput, .stDateInput, footer, header, .print-section, iframe, .stCheckbox, div[data-testid="stHeader"], div[data-testid="stSidebar"] { display: none !important; }
@@ -45,10 +61,10 @@ st.sidebar.markdown("### 👥 Perfil Comercial")
 destinatario = st.sidebar.selectbox("Tipo de Destinatario", ["Cliente", "Agente"])
 modo_impresion = st.sidebar.checkbox("Activar Modo Vista de Impresión (PDF)", value=False)
 
-# Cabecera - Ocultado el perfil del destinatario para que no salga impreso
+# Cabecera optimizada en una sola línea
 st.markdown(f"""
 <div class="header-container">
-    <div class="quote-title-left">COTIZACIÓN DE EMBARQUE INTERNACIONAL</div>
+    <div class="quote-title-left">COTIZACIÓN DE EMBARQUE</div>
     <div>
         <img class="logo-right" src="https://raw.githubusercontent.com/ignacio382/CotizadorAGT/main/5_2.png" onerror="this.src='https://i.imgur.com/8K59cM2.png'" alt="AGT Logo">
     </div>
@@ -60,7 +76,7 @@ all_incoterms = ["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP", "FAS", "FOB", 
 col1, col2 = st.columns([1, 1])
 
 with col1:
-    st.markdown('<div class="section-header">1. Parámetros e Información General</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">1. Información General</div>', unsafe_allow_html=True)
     if not modo_impresion:
         ref_num = st.text_input("Número de Referencia", value="AGT-2026-4821")
         fecha_cotizacion = st.date_input("Fecha de Emisión", value=datetime.today())
@@ -68,9 +84,9 @@ with col1:
         incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=4)
         modalidad = st.selectbox("Vía de Transporte", ["Maritimo", "Aereo", "Terrestre"])
         
-        if modalidad == "Maritimo": eq_options = ["FCL", "LCL"]
-        elif modalidad == "Aereo": eq_options = ["Aereo"]
-        else: eq_options = ["FTL", "LTL"]
+        if modalidad == "Aereo": eq_options = ["Aereo"]
+        elif modalidad == "Terrestre": eq_options = ["FTL", "LTL"]
+        else: eq_options = ["FCL", "LCL"]
         tipo_eq = st.selectbox("Modalidad de Carga", options=eq_options)
         
         container_size = "N/A"
@@ -205,9 +221,8 @@ if incoterm == "DDP":
         </div>
         """, unsafe_allow_html=True)
 
-# ----------------- BASE DE DATOS EXACTA DE LAS IMÁGENES -----------------
+# ----------------- BASE DE DATOS TARIFARIO -----------------
 tarifario_AGT = [
-    # IMPO MARÍTIMO FCL (Agentes y Clientes)
     ["Agente", "Maritimo", "Importacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 350.00, False],
     ["Agente", "Maritimo", "Importacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, False],
     ["Agente", "Maritimo", "Importacion", "FCL", "Libre deuda", "x contenedor", 95.00, 95.00, 95.00, False],
@@ -230,7 +245,6 @@ tarifario_AGT = [
     ["Cliente", "Maritimo", "Importacion", "FCL", "Handling", "x contenedor", 75.00, 75.00, 75.00, True],
     ["Cliente", "Maritimo", "Importacion", "FCL", "B/L fee", "x BL", 65.00, 65.00, 65.00, True],
 
-    # IMPO MARÍTIMO LCL (Agentes y Clientes)
     ["Agente", "Maritimo", "Importacion", "LCL", "Desconsolidación", "tn/m3 min usd 70", 35.00, 35.00, 35.00, False],
     ["Agente", "Maritimo", "Importacion", "LCL", "Logistics fee", "x BL", 20.00, 20.00, 20.00, False],
     ["Agente", "Maritimo", "Importacion", "LCL", "AGP", "tn min usd 4", 4.00, 4.00, 4.00, False],
@@ -247,7 +261,6 @@ tarifario_AGT = [
     ["Cliente", "Maritimo", "Importacion", "LCL", "Handling marítima", "x BL", 35.00, 35.00, 35.00, True],
     ["Cliente", "Maritimo", "Importacion", "LCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, True],
 
-    # EXPO MARÍTIMO FCL (Agentes y Clientes)
     ["Agente", "Maritimo", "Exportacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 370.00, False],
     ["Agente", "Maritimo", "Exportacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, False],
     ["Agente", "Maritimo", "Exportacion", "FCL", "Logistics fee", "x contenedor", 75.00, 75.00, 75.00, False],
@@ -266,7 +279,6 @@ tarifario_AGT = [
     ["Cliente", "Maritimo", "Exportacion", "FCL", "Ingreso SIM", "x BL", 65.00, 65.00, 65.00, True],
     ["Cliente", "Maritimo", "Exportacion", "FCL", "Precinto", "x contenedor", 25.00, 25.00, 25.00, True],
 
-    # EXPO MARÍTIMO LCL
     ["Agente", "Maritimo", "Exportacion", "LCL", "Consolidación", "tn/m3 min usd 70", 35.00, 35.00, 35.00, False],
     ["Agente", "Maritimo", "Exportacion", "LCL", "Emisión BL", "x BL", 65.00, 65.00, 65.00, False],
     ["Agente", "Maritimo", "Exportacion", "LCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, False],
@@ -279,7 +291,6 @@ tarifario_AGT = [
     ["Cliente", "Maritimo", "Exportacion", "LCL", "Gate", "x BL", 45.00, 45.00, 45.00, True],
     ["Cliente", "Maritimo", "Exportacion", "LCL", "VGM", "x BL", 25.00, 25.00, 25.00, True],
 
-    # IMPO AÉREA
     ["Agente", "Aereo", "Importacion", "Aereo", "Res. 3244/11", "x guía/parcial", 20.00, 20.00, 20.00, False],
     ["Agente", "Aereo", "Importacion", "Aereo", "Desconsolidación", "x bulto min usd 20", 0.50, 0.50, 0.50, False],
     ["Agente", "Aereo", "Importacion", "Aereo", "IATA Collection fee", "3% s/AWB min usd 50", 0.03, 0.03, 0.03, False],
@@ -294,7 +305,6 @@ tarifario_AGT = [
     ["Cliente", "Aereo", "Importacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, True],
     ["Cliente", "Aereo", "Importacion", "Aereo", "Carga DGR (en caso de aplicar)", "x guía (MIN)", 180.00, 180.00, 180.00, True],
 
-    # EXPO AÉREA
     ["Agente", "Aereo", "Exportacion", "Aereo", "TCA*", "x guía min usd 20", 0.02, 0.02, 0.02, False],
     ["Agente", "Aereo", "Exportacion", "Aereo", "Emisión de AWB", "x guía", 35.00, 35.00, 35.00, False],
     ["Agente", "Aereo", "Exportacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, False],
@@ -306,7 +316,6 @@ tarifario_AGT = [
     ["Cliente", "Aereo", "Exportacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, True],
     ["Cliente", "Aereo", "Exportacion", "Aereo", "Carga DGR (si aplica)", "x guía (MIN)", 180.00, 180.00, 180.00, True],
 
-    # TERRESTRES (FTL / LTL para Impo y Expo)
     ["Agente", "Terrestre", "Importacion", "FTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
     ["Agente", "Terrestre", "Importacion", "FTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, False],
     ["Agente", "Terrestre", "Importacion", "LTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
@@ -335,7 +344,6 @@ filtered_df = df_base[
     (df_base['TipoEquipamiento'] == tipo_eq)
 ].copy()
 
-# CÁLCULOS LOGÍSTICOS AVANZADOS SEGÚN LAS REGLAS DE LAS IMÁGENES
 fijos_total = 0.0
 fijos_iva = 0.0
 rows_to_render = []
@@ -381,8 +389,8 @@ if not filtered_df.empty:
             "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
         })
 
-# Título de sección simplificado a demanda del usuario
-st.markdown('<div class="section-header">4. Conceptos Fijos Locales</div>', unsafe_allow_html=True)
+# Título de sección simplificado
+st.markdown('<div class="section-header">4. Conceptos Fijos Loces</div>', unsafe_allow_html=True)
 if rows_to_render:
     st.dataframe(pd.DataFrame(rows_to_render), use_container_width=True, hide_index=True)
 else:
@@ -412,10 +420,9 @@ if apply_delivery:
     clausula_final += f"• **ENTREGA TERRESTRE:** Delivery programado desde *{st.session_state.get('del_from', 'Origen')}* hasta *{st.session_state.get('del_to', 'Destino')}* por un importe de USD {delivery_cost:,.2f}.\n"
 clausula_final += "• **REGULACIONES:** Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
-st.markdown(f'<div class="clause-box">{clausula_final.replace("\n", "<br>")}</div>', unsafe_allow_html=True)
+st.markdown('<div class="clause-box">' + clausula_final.replace('\n', '<br>') + '</div>', unsafe_allow_html=True)
 
-# Sección de Impresión Forzada vía Parent Iframe Javascript
-st.markdown('<div class="section-header print-section">6. Acciones de Exportación e Impresión</div>', unsafe_allow_html=True)
+# SECCIÓN DE BOTÓN DIRECTO SIN TÍTULOS REPETITIVOS
 components.html(
     """
     <style>
