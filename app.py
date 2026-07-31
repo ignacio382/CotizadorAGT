@@ -45,10 +45,10 @@ st.sidebar.markdown("### 👥 Perfil Comercial")
 destinatario = st.sidebar.selectbox("Tipo de Destinatario", ["Cliente", "Agente"])
 modo_impresion = st.sidebar.checkbox("Activar Modo Vista de Impresión (PDF)", value=False)
 
-# Cabecera
+# Cabecera - Ocultado el perfil del destinatario para que no salga impreso
 st.markdown(f"""
 <div class="header-container">
-    <div class="quote-title-left">COTIZACIÓN DE EMBARQUE INTERNACIONAL (Perfil: {destinatario})</div>
+    <div class="quote-title-left">COTIZACIÓN DE EMBARQUE INTERNACIONAL</div>
     <div>
         <img class="logo-right" src="https://raw.githubusercontent.com/ignacio382/CotizadorAGT/main/5_2.png" onerror="this.src='https://i.imgur.com/8K59cM2.png'" alt="AGT Logo">
     </div>
@@ -64,7 +64,7 @@ with col1:
     if not modo_impresion:
         ref_num = st.text_input("Número de Referencia", value="AGT-2026-4821")
         fecha_cotizacion = st.date_input("Fecha de Emisión", value=datetime.today())
-        operacion = st.selectbox("Dirección del Flujo", ["Importacion", "Exportacion"])
+        operacion = st.selectbox("Tipo de Operación", ["Importacion", "Exportacion"])
         incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=4)
         modalidad = st.selectbox("Vía de Transporte", ["Maritimo", "Aereo", "Terrestre"])
         
@@ -75,7 +75,7 @@ with col1:
         
         container_size = "N/A"
         if modalidad == "Maritimo" and tipo_eq == "FCL":
-            container_size = st.selectbox("Modelo del Contenedor (Filtro THC)", ["20' Standard", "40' HQ / Standard", "Reefer (RF)"])
+            container_size = st.selectbox("Modelo del Contenedor (THC)", ["20' Standard", "40' HQ / Standard", "Reefer (RF)"])
             
         cantidad = st.number_input("Cantidad de Unidades (Contenedores/Bultos/CRT)", min_value=1, value=1)
         
@@ -120,7 +120,7 @@ with col1:
         <div class="print-card">
             <b>Referencia:</b> {ref_num}<br>
             <b>Fecha Emisión:</b> {fecha_cotizacion.strftime('%d/%m/%Y')}<br>
-            <b>Flujo:</b> {operacion} | <b>Condición de Venta:</b> {incoterm}<br>
+            <b>Operación:</b> {operacion} | <b>Condición de Venta:</b> {incoterm}<br>
             <b>Vía:</b> {modalidad} ({tipo_eq})<br>
             <b>Equipo/Medida:</b> {container_size if modalidad=='Maritimo' and tipo_eq=='FCL' else f'{ton_m3} w/m' if tipo_eq=='LCL' else f'{peso_kg} Kg' if modalidad=='Aereo' else 'Estandar'} | <b>Cantidad:</b> {cantidad}<br>
             <b>Medio asignado:</b> {nombre_transporte}<br>
@@ -381,7 +381,8 @@ if not filtered_df.empty:
             "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
         })
 
-st.markdown('<div class="section-header">4. Conceptos Fijos Locales desde Base de Datos</div>', unsafe_allow_html=True)
+# Título de sección simplificado a demanda del usuario
+st.markdown('<div class="section-header">4. Conceptos Fijos Locales</div>', unsafe_allow_html=True)
 if rows_to_render:
     st.dataframe(pd.DataFrame(rows_to_render), use_container_width=True, hide_index=True)
 else:
