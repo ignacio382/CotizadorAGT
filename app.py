@@ -6,9 +6,10 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="AGT - Cotizador Multimodal Profesional", page_icon="🌐", layout="wide")
 
-# Estilos visuales optimizados al máximo para el espacio vertical
+# Estilos visuales con la identidad de AGT optimizados para pantalla e impresión directa legible
 st.markdown("""
 <style>
+    /* Estilos para visualización en pantalla normal */
     .header-container {
         display: flex;
         justify-content: space-between;
@@ -16,19 +17,19 @@ st.markdown("""
         padding-bottom: 6px;
         border-bottom: 2px solid #0B2240;
         margin-bottom: 12px;
-        flex-wrap: nowrap; /* Fuerza a mantenerse en un solo renglón */
+        flex-wrap: nowrap;
     }
     .logo-right { 
-        max-width: 180px; /* Logo más chico para ganar espacio y asegurar una sola línea */
+        max-width: 180px; 
         height: auto; 
         border-radius: 2px; 
     }
     .quote-title-left { 
-        font-size: 18px; /* Tamaño de letra optimizado */
+        font-size: 18px; 
         font-weight: bold; 
         color: #0B2240; 
         font-family: 'Segoe UI', sans-serif;
-        white-space: nowrap; /* Evita que el texto salte de línea */
+        white-space: nowrap;
     }
     .section-header { 
         font-size: 15px; 
@@ -40,7 +41,6 @@ st.markdown("""
         margin-bottom: 10px;
     }
     .clause-box { background-color: #FFFDF5; border: 1px solid #FFEBAA; padding: 12px; border-radius: 6px; font-size: 13.0px; color: #333333; line-height: 1.4; }
-    .print-card { background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 13.0px; }
     
     .total-row-container {
         display: flex; justify-content: flex-end; align-items: center; gap: 15px;
@@ -50,17 +50,50 @@ st.markdown("""
     .total-label-text { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
     .total-price-text { font-size: 24px; font-weight: bold; color: #FF6B00; }
 
+    /* REGLAS DE IMPRESIÓN DIRECTA AVANZADA (Fuerza tamaño legible y limpia el PDF) */
     @media print {
-        .stButton, .stNumberInput, .stSelectbox, .stTextInput, .stDateInput, footer, header, .print-section, iframe, .stCheckbox, div[data-testid="stHeader"], div[data-testid="stSidebar"] { display: none !important; }
-        .header-container, .section-header, .clause-box, .print-card, .total-row-container, .logo-right { display: flex !important; }
+        /* Ocultar barra lateral de Streamlit, encabezados web y el botón de imprimir */
+        [data-testid="stSidebar"], [data-testid="stHeader"], footer, header, .print-section, iframe { 
+            display: none !important; 
+        }
+        
+        /* Asegurar que la tipografía en el PDF no salga minúscula ni borrosa */
+        body, p, div, span, td, th {
+            font-size: 13.5pt !important; /* Agranda la letra en la hoja física o PDF */
+            color: #111111 !important;
+            font-family: 'Segoe UI', Arial, sans-serif !important;
+        }
+        
+        /* Modificar el comportamiento de las casillas de entrada de datos (inputs) al imprimir */
+        input, select, textarea {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            font-size: 13.5pt !important;
+            font-weight: bold !important;
+            padding: 0 !important;
+        }
+        
+        /* Ocultar flechas de selección de los desplegables de Streamlit en la hoja impresa */
+        div[data-baseweb="select"] button, div[role="button"] {
+            display: none !important;
+        }
+        
+        /* Mantener bloques clave visibles en su posición corporativa */
+        .header-container { display: flex !important; border-bottom: 2px solid #0B2240 !important; }
+        .logo-right { display: block !important; max-width: 180px !important; }
+        .quote-title-left { display: block !important; font-size: 18pt !important; }
+        .section-header { display: flex !important; border-left: 5px solid #FF6B00 !important; font-size: 14pt !important; }
+        .clause-box { display: block !important; background-color: #FFFDF5 !important; border: 1px solid #FFEBAA !important; }
+        .total-row-container { display: flex !important; background-color: #0B2240 !important; }
+        .total-price-text { color: #FF6B00 !important; font-size: 22pt !important; }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# FILTROS DE ESTRUCTURA Y DESTINATARIO INVISIBLE (SIDEBAR)
+# FILTRO INVISIBLE DE PERFIL COMERCIAL (SOLO EN SIDEBAR)
 st.sidebar.markdown("### 👥 Perfil Comercial")
 destinatario = st.sidebar.selectbox("Tipo de Destinatario", ["Cliente", "Agente"])
-modo_impresion = st.sidebar.checkbox("Activar Modo Vista de Impresión (PDF)", value=False)
 
 # Cabecera forzada en un solo renglón compacto
 st.markdown(f"""
@@ -78,151 +111,75 @@ col1, col2 = st.columns([1, 1])
 
 with col1:
     st.markdown('<div class="section-header">1. Información General</div>', unsafe_allow_html=True)
-    if not modo_impresion:
-        ref_num = st.text_input("Número de Referencia", value="AGT-2026-4821")
-        fecha_cotizacion = st.date_input("Fecha de Emisión", value=datetime.today())
-        operacion = st.selectbox("Tipo de Operación", ["Importacion", "Exportacion"])
-        incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=4)
-        modalidad = st.selectbox("Vía de Transporte", ["Maritimo", "Aereo", "Terrestre"])
+    ref_num = st.text_input("Número de Referencia", value="AGT-2026-4821")
+    fecha_cotizacion = st.date_input("Fecha de Emisión", value=datetime.today())
+    operacion = st.selectbox("Tipo de Operación", ["Importacion", "Exportacion"])
+    incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=4)
+    modalidad = st.selectbox("Vía de Transporte", ["Maritimo", "Aereo", "Terrestre"])
+    
+    if modalidad == "Aereo": eq_options = ["Aereo"]
+    elif modalidad == "Terrestre": eq_options = ["FTL", "LTL"]
+    else: eq_options = ["FCL", "LCL"]
+    tipo_eq = st.selectbox("Modalidad de Carga", options=eq_options)
+    
+    container_size = "N/A"
+    if modalidad == "Maritimo" and tipo_eq == "FCL":
+        container_size = st.selectbox("Modelo del Contenedor (THC)", ["20' Standard", "40' HQ / Standard", "Reefer (RF)"])
         
-        if modalidad == "Aereo": eq_options = ["Aereo"]
-        elif modalidad == "Terrestre": eq_options = ["FTL", "LTL"]
-        else: eq_options = ["FCL", "LCL"]
-        tipo_eq = st.selectbox("Modalidad de Carga", options=eq_options)
-        
-        container_size = "N/A"
-        if modalidad == "Maritimo" and tipo_eq == "FCL":
-            container_size = st.selectbox("Modelo del Contenedor (THC)", ["20' Standard", "40' HQ / Standard", "Reefer (RF)"])
-            
-        cantidad = st.number_input("Cantidad de Unidades (Contenedores/Bultos/CRT)", min_value=1, value=1)
-        
-        ton_m3 = 1.0
-        peso_kg = 0.0
-        if tipo_eq == "LCL":
-            ton_m3 = st.number_input("Volumen / Toneladas del envío (w/m)", min_value=0.1, value=1.0, step=0.1)
-        if modalidad == "Aereo":
-            peso_kg = st.number_input("Peso Bruto Tarifado (Kg)", min_value=1.0, value=100.0, step=5.0)
+    cantidad = st.number_input("Cantidad de Unidades (Contenedores/Bultos/CRT)", min_value=1, value=1)
+    
+    ton_m3 = 1.0
+    peso_kg = 0.0
+    if tipo_eq == "LCL":
+        ton_m3 = st.number_input("Volumen / Toneladas del envío (w/m)", min_value=0.1, value=1.0, step=0.1)
+    if modalidad == "Aereo":
+        peso_kg = st.number_input("Peso Bruto Tarifado (Kg)", min_value=1.0, value=100.0, step=5.0)
 
-        if modalidad == "Maritimo":
-            nombre_transporte = st.text_input("Línea Marítima / Buque", value="Hapag-Lloyd - SAN CLEMENTE V.260W")
-            tt_days = st.number_input("Transit Time (Días)", min_value=0, value=14)
-            free_days = st.number_input("Días Libres en Destino", min_value=0, value=7)
-        elif modalidad == "Aereo":
-            nombre_transporte = st.text_input("Línea Aérea / Vuelo", value="Lufthansa - LH511")
-            tt_days, free_days = 0, 3
-        else:
-            nombre_transporte = st.text_input("Empresa Terrestre / Patente", value="Transportes Int. - CTR-765")
-            tt_days, free_days = 0, 0
-            
-        etd_date = st.date_input("Fecha Salida (ETD)", value=datetime.today() + timedelta(days=7))
-        eta_date = st.date_input("Fecha Llegada (ETA)", value=datetime.today() + timedelta(days=21))
+    if modalidad == "Maritimo":
+        nombre_transporte = st.text_input("Línea Marítima / Buque", value="Hapag-Lloyd - SAN CLEMENTE V.260W")
+        tt_days = st.number_input("Transit Time (Días)", min_value=0, value=14)
+        free_days = st.number_input("Días Libres en Destino", min_value=0, value=7)
+    elif modalidad == "Aereo":
+        nombre_transporte = st.text_input("Línea Aérea / Vuelo", value="Lufthansa - LH511")
+        tt_days, free_days = 0, 3
     else:
-        ref_num = st.session_state.get('ref_num', "AGT-2026-4821")
-        fecha_cotizacion = st.session_state.get('fecha_cotizacion', datetime.today())
-        operacion = st.session_state.get('operacion', "Importacion")
-        incoterm = st.session_state.get('incoterm', "DAP")
-        modalidad = st.session_state.get('modalidad', "Maritimo")
-        tipo_eq = st.session_state.get('tipo_eq', "FCL")
-        container_size = st.session_state.get('container_size', "40' HQ / Standard")
-        cantidad = st.session_state.get('cantidad', 1)
-        ton_m3 = st.session_state.get('ton_m3', 1.0)
-        peso_kg = st.session_state.get('peso_kg', 0.0)
-        nombre_transporte = st.session_state.get('nombre_transporte', "Hapag-Lloyd - Buque Ficticio")
-        etd_date = st.session_state.get('etd_date', datetime.today() + timedelta(days=7))
-        eta_date = st.session_state.get('eta_date', datetime.today() + timedelta(days=21))
-        tt_days = st.session_state.get('tt_days', 0)
-        free_days = st.session_state.get('free_days', 0)
+        nombre_transporte = st.text_input("Empresa Terrestre / Patente", value="Transportes Int. - CTR-765")
+        tt_days, free_days = 0, 0
         
-        st.markdown(f"""
-        <div class="print-card">
-            <b>Referencia:</b> {ref_num}<br>
-            <b>Fecha Emisión:</b> {fecha_cotizacion.strftime('%d/%m/%Y')}<br>
-            <b>Operación:</b> {operacion} | <b>Condición de Venta:</b> {incoterm}<br>
-            <b>Vía:</b> {modalidad} ({tipo_eq})<br>
-            <b>Equipo/Medida:</b> {container_size if modalidad=='Maritimo' and tipo_eq=='FCL' else f'{ton_m3} w/m' if tipo_eq=='LCL' else f'{peso_kg} Kg' if modalidad=='Aereo' else 'Estandar'} | <b>Cantidad:</b> {cantidad}<br>
-            <b>Medio asignado:</b> {nombre_transporte}<br>
-            <b>Cronograma:</b> ETD: {etd_date.strftime('%d/%m/%Y')} | ETA: {eta_date.strftime('%d/%m/%Y')}
-        </div>
-        """, unsafe_allow_html=True)
+    etd_date = st.date_input("Fecha Salida (ETD)", value=datetime.today() + timedelta(days=7))
+    eta_date = st.date_input("Fecha Llegada (ETA)", value=datetime.today() + timedelta(days=21))
 
 with col2:
     st.markdown('<div class="section-header">2. Tarifas</div>', unsafe_allow_html=True)
-    if not modo_impresion:
-        flete_intl = st.number_input("Flete Internacional Base (USD)", min_value=0.0, value=1850.0)
-        gastos_term = st.number_input("Gastos Terminal / Depósito (USD)", min_value=0.0, value=650.0)
-        apply_delivery = st.checkbox("¿Aplica Flete Interno / Delivery?", value=True)
-        
-        if apply_delivery:
-            del_from = st.text_input("Origen del Flete Local", value="Puerto de Buenos Aires" if modalidad == "Maritimo" else "Aeropuerto de Ezeiza")
-            del_to = st.text_input("Destino del Flete Local", value="Planta Industrial del Cliente")
-            delivery_cost = st.number_input("Valor del Delivery (USD)", min_value=0.0, value=450.0)
-        else:
-            delivery_cost, del_from, del_to = 0.0, "N/A", "N/A"
-            
-        st.session_state['ref_num'] = ref_num
-        st.session_state['fecha_cotizacion'] = fecha_cotizacion
-        st.session_state['operacion'] = operacion
-        st.session_state['incoterm'] = incoterm
-        st.session_state['modalidad'] = modalidad
-        st.session_state['tipo_eq'] = tipo_eq
-        st.session_state['container_size'] = container_size
-        st.session_state['cantidad'] = cantidad
-        st.session_state['ton_m3'] = ton_m3
-        st.session_state['peso_kg'] = peso_kg
-        st.session_state['nombre_transporte'] = nombre_transporte
-        st.session_state['etd_date'] = etd_date
-        st.session_state['eta_date'] = eta_date
-        st.session_state['tt_days'] = tt_days
-        st.session_state['free_days'] = free_days
-        st.session_state['flete_intl'] = flete_intl
-        st.session_state['gastos_term'] = gastos_term
-        st.session_state['delivery_cost'] = delivery_cost
-        st.session_state['apply_delivery'] = apply_delivery
-        st.session_state['del_from'] = del_from
-        st.session_state['del_to'] = del_to
+    flete_intl = st.number_input("Flete Internacional Base (USD)", min_value=0.0, value=1850.0)
+    gastos_term = st.number_input("Gastos Terminal / Depósito (USD)", min_value=0.0, value=650.0)
+    apply_delivery = st.checkbox("¿Aplica Flete Interno / Delivery?", value=True)
+    
+    if apply_delivery:
+        del_from = st.text_input("Origen del Flete Local", value="Puerto de Buenos Aires" if modalidad == "Maritimo" else "Aeropuerto de Ezeiza")
+        del_to = st.text_input("Destino del Flete Local", value="Planta Industrial del Cliente")
+        delivery_cost = st.number_input("Valor del Delivery (USD)", min_value=0.0, value=450.0)
     else:
-        flete_intl = st.session_state.get('flete_intl', 1850.0)
-        gastos_term = st.session_state.get('gastos_term', 650.0)
-        delivery_cost = st.session_state.get('delivery_cost', 450.0)
-        apply_delivery = st.session_state.get('apply_delivery', True)
-        del_from = st.session_state.get('del_from', "Puerto de Buenos Aires")
-        del_to = st.session_state.get('del_to', "Planta Industrial")
-        
-        st.markdown(f"""
-        <div class="print-card">
-            <b>Flete Internacional Base:</b> USD {flete_intl:,.2f}<br>
-            <b>Gastos Terminal/Carrier:</b> USD {gastos_term:,.2f}<br>
-            <b>Flete Doméstico / Delivery:</b> USD {delivery_cost:,.2f} (Desde {del_from} hasta {del_to})
-        </div>
-        """, unsafe_allow_html=True)
+        delivery_cost, del_from, del_to = 0.0, "N/A", "N/A"
 
 # Módulo Despacho de Aduana Especial si es DDP
 despacho_total = 0.0
 if incoterm == "DDP":
     st.markdown('<div class="section-header">3. Módulo Despacho de Aduana (DDP)</div>', unsafe_allow_html=True)
-    if not modo_impresion:
-        honorarios = st.number_input("Honorarios Despachante (USD)", min_value=0.0, value=200.0)
-        gastos_despacho = st.number_input("Gastos Operativos (USD)", min_value=0.0, value=120.0)
-        digitalizacion = st.number_input("Tasa Digitalización SIM (USD)", min_value=0.0, value=45.0)
-        
-        duty_pct = st.number_input("Duty (%)", min_value=0.0, max_value=100.0, value=14.0) / 100.0
-        iva_pct = st.number_input("IVA (%)", min_value=0.0, max_value=100.0, value=21.0) / 100.0
-        iva_adicional = st.number_input("IVA Adicional (%)", min_value=0.0, max_value=100.0, value=20.0) / 100.0
-        other_taxes = st.number_input("Otros Impuestos (%)", min_value=0.0, max_value=100.0, value=3.0) / 100.0
-        
-        valor_cif = flete_intl + 20000.0
-        duties_calculated = valor_cif * (duty_pct + iva_pct + iva_adicional + other_taxes)
-        despacho_total = honorarios + gastos_despacho + digitalizacion + duties_calculated
-        st.session_state['despacho_total'] = despacho_total
-    else:
-        despacho_total = st.session_state.get('despacho_total', 0.0)
-        st.markdown(f"""
-        <div class="print-card">
-            <b>Despacho de Aduana + Impuestos Nacionalización:</b> USD {despacho_total:,.2f}
-        </div>
-        """, unsafe_allow_html=True)
+    honorarios = st.number_input("Honorarios Despachante (USD)", min_value=0.0, value=200.0)
+    gastos_despacho = st.number_input("Gastos Operativos (USD)", min_value=0.0, value=120.0)
+    digitalizacion = st.number_input("Tasa Digitalización SIM (USD)", min_value=0.0, value=45.0)
+    
+    duty_pct = st.number_input("Duty (%)", min_value=0.0, max_value=100.0, value=14.0) / 100.0
+    iva_pct = st.number_input("IVA (%)", min_value=0.0, max_value=100.0, value=21.0) / 100.0
+    iva_adicional = st.number_input("IVA Adicional (%)", min_value=0.0, max_value=100.0, value=20.0) / 100.0
+    other_taxes = st.number_input("Otros Impuestos (%)", min_value=0.0, max_value=100.0, value=3.0) / 100.0
+    
+    valor_cif = flete_intl + 20000.0
+    duties_calculated = valor_cif * (duty_pct + iva_pct + iva_adicional + other_taxes)
+    despacho_total = honorarios + gastos_despacho + digitalizacion + duties_calculated
 
-# ----------------- BASE DE DATOS TARIFARIO -----------------
+# ----------------- BASE DE DATOS TARIFARIO SEGÚN PERFIL -----------------
 tarifario_AGT = [
     ["Agente", "Maritimo", "Importacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 350.00, False],
     ["Agente", "Maritimo", "Importacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, False],
@@ -390,7 +347,6 @@ if not filtered_df.empty:
             "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
         })
 
-# Título corregido a "Conceptos Fijos Locales"
 st.markdown('<div class="section-header">4. Conceptos Fijos Locales</div>', unsafe_allow_html=True)
 if rows_to_render:
     st.dataframe(pd.DataFrame(rows_to_render), use_container_width=True, hide_index=True)
@@ -401,7 +357,7 @@ else:
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
-# TOTAL REDISEÑADO LIMPIO SIN TEXTO DE IVA
+# TOTAL REDISEÑADO LIMPIO
 st.markdown(f'''
 <div class="total-row-container">
     <div class="total-label-text">TOTAL</div>
@@ -416,14 +372,14 @@ clausula_final += f"• **TRANSPORTE ASIGNADO:** Medio coordinado vía *{nombre_
 clausula_final += f"• **CRONOGRAMA ESTIMADO:** ETD: **{etd_date.strftime('%d/%m/%Y')}** | ETA: **{eta_date.strftime('%d/%m/%Y')}**.\n"
 
 if modalidad == "Maritimo":
-    clausula_final += f"• **TIEMPOS DE DESTINO:** Transit Time estimado en **{st.session_state.get('tt_days', 14)} días** con un período de **{st.session_state.get('free_days', 7)} días libres** en destino.\n"
+    clausula_final += f"• **TIEMPOS DE DESTINO:** Transit Time estimado en **{tt_days} días** con un período de **{free_days} días libres** en destino.\n"
 if apply_delivery:
-    clausula_final += f"• **ENTREGA TERRESTRE:** Delivery programado desde *{st.session_state.get('del_from', 'Origen')}* hasta *{st.session_state.get('del_to', 'Destino')}* por un importe de USD {delivery_cost:,.2f}.\n"
+    clausula_final += f"• **ENTREGA TERRESTRE:** Delivery programado desde *{del_from}* hasta *{del_to}* por un importe de USD {delivery_cost:,.2f}.\n"
 clausula_final += "• **REGULACIONES:** Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
 st.markdown('<div class="clause-box">' + clausula_final.replace('\n', '<br>') + '</div>', unsafe_allow_html=True)
 
-# Sección de botón de impresión directo
+# Sección de botón de impresión directo (Sujeta a iframe bypass nativo)
 components.html(
     """
     <style>
