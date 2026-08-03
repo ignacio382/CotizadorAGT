@@ -20,7 +20,7 @@ st.markdown("""
         flex-wrap: nowrap;
     }
     .logo-right { 
-        max-width: 260px; 
+        max-width: 340px; /* Logo más grande solicitado */
         height: auto; 
         border-radius: 2px; 
     }
@@ -55,7 +55,6 @@ st.markdown("""
 
     /* ---------------- REGLAS DE IMPRESIÓN DIRECTA NATIVA (PDF) ---------------- */
     @media print {
-        /* Ocultar toda la interfaz interactiva e inestable de Streamlit */
         div[data-testid="stSidebar"], div[data-testid="stHeader"], footer, header, .print-section, iframe, 
         .stCheckbox, button, .stWidget, div[role="radiogroup"], div[data-testid="stHorizontalBlock"] { 
             display: none !important; 
@@ -66,13 +65,11 @@ st.markdown("""
             size: auto;
         }
         
-        /* Activar el bloque alternativo de texto plano indestructible */
         .print-only-block { 
             display: block !important; 
             width: 100% !important;
         }
         
-        /* Forzar tipografía reducida un punto (9.5pt) para compactación y fluidez entre hojas */
         body, p, div, span, td, th {
             font-size: 9.5pt !important; 
             color: #111111 !important;
@@ -81,7 +78,6 @@ st.markdown("""
             background: transparent !important;
         }
         
-        /* Corrección de superposición: Estructura fija para la cabecera impresa */
         .header-container { 
             display: flex !important; 
             justify-content: space-between !important;
@@ -93,8 +89,8 @@ st.markdown("""
         }
         .logo-right { 
             display: block !important; 
-            width: 260px !important; 
-            max-width: 260px !important;
+            width: 340px !important; /* Preserva escala grande en papel */
+            max-width: 340px !important;
             height: auto !important;
         }
         .quote-title-left { 
@@ -112,7 +108,6 @@ st.markdown("""
             page-break-after: avoid !important;
         }
         
-        /* Contenedores de datos en impresión (Limpios sin recuadros celestes de inputs) */
         .data-grid-print {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
@@ -126,7 +121,6 @@ st.markdown("""
             line-height: 1.2 !important;
         }
         
-        /* Tablas de conceptos con saltos de página fluidos si pasa a la hoja 2 */
         .stDataFrame, table { 
             display: table !important; 
             width: 100% !important;
@@ -260,8 +254,25 @@ with col2:
             tax_add_vat = valor_mercaderia * (input_add_vat / 100)
             tax_other = valor_mercaderia * (input_other / 100)
 
-# ---------------- BYPASS INDESTRUCTIBLE PARA IMPRESIÓN ----------------
-# Renderiza bloques de texto plano puro controlados por CSS que reemplazan las cajas de Streamlit en el PDF
+    # NUEVO CAMPO LIBRE SOLICITADO: CONCEPTO FIJO ADICIONAL MANUAL EDITABLE
+    st.markdown('<div class="section-header">Concepto Fijo Adicional (Opcional)</div>', unsafe_allow_html=True)
+    manual_concepto = st.text_input("Nombre del Gasto Extra", value="")
+    col_m1, col_t2 = st.columns(2)
+    with col_m1:
+        manual_unidad = st.text_input("Unidad (ej: x BL, x Contenedor)", value="x BL")
+    with col_t2:
+        manual_precio = st.number_input("Monto Neto (USD)", min_value=0.0, value=0.0, step=5.0)
+
+# -------------- LÓGICA DE OCULTACIÓN DE TARIFAS EN 0 EN EL PDF --------------
+print_tarifas_html = ""
+if flete_intl > 0:
+    print_tarifas_html += f'<div class="data-item-print"><b>Flete Internacional Base:</b> USD {flete_intl:,.2f}</div>'
+if gastos_term > 0:
+    print_tarifas_html += f'<div class="data-item-print"><b>Gastos Terminal / Depósito:</b> USD {gastos_term:,.2f}</div>'
+if delivery_cost > 0:
+    print_tarifas_html += f'<div class="data-item-print"><b>Logística Interna / Delivery:</b> USD {delivery_cost:,.2f} (Desde {del_from} hasta {del_to})</div>'
+
+# Renderizado dinámico del bypass sin ceros
 st.markdown(f"""
 <div class="print-only-block">
     <div class="section-header">1. Información General</div>
@@ -277,16 +288,11 @@ st.markdown(f"""
         <div class="data-item-print"><b>Medio Asignado:</b> {nombre_transporte}</div>
         <div class="data-item-print"><b>Cronograma Proyectado:</b> ETD: {etd_date.strftime('%d/%m/%Y')} | ETA: {eta_date.strftime('%d/%m/%Y')}</div>
     </div>
-    <div class="section-header">2. Tarifas Principales</div>
-    <div class="data-grid-print">
-        <div class="data-item-print"><b>Flete Internacional Base:</b> USD {flete_intl:,.2f}</div>
-        <div class="data-item-print"><b>Gastos Terminal / Depósito:</b> USD {gastos_term:,.2f}</div>
-        <div class="data-item-print"><b>Logística Interna / Delivery:</b> USD {delivery_cost:,.2f} (Desde {del_from} hasta {del_to})</div>
-    </div>
+    {"<div class='section-header'>2. Tarifas Principales</div><div class='data-grid-print'>" + print_tarifas_html + "</div>" if print_tarifas_html else ""}
 </div>
 """, unsafe_allow_html=True)
 
-# ----------------- PROCESAMIENTO DE CONCEPTOS BI -----------------
+# ----------------- BASE DE DATOS TARIFARIO -----------------
 tarifario_AGT = [
     ["Agente", "Maritimo", "Importacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 350.00, False],
     ["Agente", "Maritimo", "Importacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, False],
@@ -409,6 +415,7 @@ filtered_df = df_base[
     (df_base['TipoEquipamiento'] == tipo_eq)
 ].copy()
 
+# CÁLCULOS OPERATIVOS CENTRALES
 fijos_total = 0.0
 fijos_iva = 0.0
 rows_to_render = []
@@ -446,6 +453,23 @@ if not filtered_df.empty:
             "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
         })
 
+# AGREGAR EL CONCEPTO MANUAL SOLO SI TIENE UN NOMBRE Y PRECIO MAYOR A CERO
+manual_cost_total = 0.0
+if manual_concepto.strip() != "" and manual_precio > 0:
+    manual_subtotal = manual_precio * cantidad
+    # Si es para perfil Cliente, le aplicamos IVA del 21% de forma equivalente
+    manual_iva = manual_subtotal * 0.21 if destinatario == "Cliente" else 0.0
+    manual_cost_total = manual_subtotal + manual_iva
+    
+    rows_to_render.append({
+        "Concepto": manual_concepto.strip(),
+        "Unidad": manual_unidad,
+        "Moneda": "USD",
+        "Tarifa Base": f"USD {manual_precio:,.2f}",
+        "Subtotal": f"USD {manual_subtotal:,.2f}",
+        "IVA (21%)": f"USD {manual_iva:,.2f}" if destinatario == "Cliente" else "Exento"
+    })
+
 if apply_broker:
     tipo_h_lbl = "0.7% FOB (Min 275)" if operacion == "Exportacion" else "0.7% CIF (Min 275)"
     rows_to_render.append({"Concepto": "Hon. Despacho", "Unidad": tipo_h_lbl, "Moneda": "USD", "Tarifa Base": "Variable", "Subtotal": f"USD {max(275.0, valor_mercaderia*0.007):,.2f}", "IVA (21%)": "Exento"})
@@ -458,18 +482,8 @@ if rows_to_render:
 else:
     st.info("No se registran cargos fijos adicionales parametrizados para este perfil.")
 
-if apply_broker and 'apply_taxes' in locals() and apply_taxes:
-    st.markdown('<div class="section-header">5. Duties & Taxes</div>', unsafe_allow_html=True)
-    df_impuestos = pd.DataFrame([
-        {"Impuesto / Concepto Fiscal": "Duty / Derechos de Importación", "Tasa Gravamen": f"{input_duty}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_duty:,.2f}"},
-        {"Impuesto / Concepto Fiscal": "VAT / IVA General", "Tasa Gravamen": f"{input_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_vat:,.2f}"},
-        {"Impuesto / Concepto Fiscal": "Additional VAT / IVA Adicional", "Tasa Gravamen": f"{input_add_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_add_vat:,.2f}"},
-        {"Impuesto / Concepto Fiscal": "Other taxes / Tasa Estadística y Otros", "Tasa Gravamen": f"{input_other}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_other:,.2f}"}
-    ])
-    st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
-
-# Totales Consolidados finales (Duties & Taxes NO se suman al total)
-gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost
+# Totales Consolidados finales incluyendo el concepto manual dinámico
+gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + manual_cost_total
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
 st.markdown(f'''
@@ -479,7 +493,6 @@ st.markdown(f'''
 </div>
 ''', unsafe_allow_html=True)
 
-# Modificación de jerarquía: Los términos se renderizan de forma segura sin peligro de pisar el total
 st.markdown('<div class="section-header">5. Términos Legales y Validez del Servicio</div>', unsafe_allow_html=True)
 
 clausula_final = f"VALIDEZ TEMPORAL: Esta propuesta es válida hasta el {fecha_validez.strftime('%d/%m/%Y')} (5 días desde su emisión).<br>"
@@ -488,7 +501,7 @@ clausula_final += f"CRONOGRAMA ESTIMADO: ETD: {etd_date.strftime('%d/%m/%Y')} | 
 
 if modalidad == "Maritimo":
     clausula_final += f"TIEMPOS DE DESTINO: Transit Time estimado en {tt_days} días con un período de {free_days} días libres en destino.<br>"
-if apply_delivery:
+if apply_delivery and delivery_cost > 0:
     clausula_final += f"ENTREGA TERRESTRE: Delivery programado desde {del_from} hasta {del_to} por un importe de USD {delivery_cost:,.2f}.<br>"
 if apply_broker:
     clausula_final += f"DESPACHO DE ADUANA: Coordinado bajo modalidad {operacion} por cuenta de AGT Broker (Posición Arancelaria: {pa_code}).<br>"
@@ -496,11 +509,10 @@ if apply_broker:
 if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     clausula_final += "IMPUESTOS: Duties and taxes no incluidos en la cotización comercial.<br>"
 
-clausula_final += "REGULACIONES: Las cotizaciones están sugeras a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
+clausula_final += "REGULACIONES: Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
 st.markdown(f'<div class="clause-box">{clausula_final}</div>', unsafe_allow_html=True)
 
-# Botón de impresión
 components.html(
     """
     <style>
