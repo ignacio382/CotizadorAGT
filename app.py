@@ -20,7 +20,7 @@ st.markdown("""
         flex-wrap: nowrap;
     }
     .logo-right { 
-        max-width: 340px; /* Logo más grande solicitado */
+        max-width: 340px; 
         height: auto; 
         border-radius: 2px; 
     }
@@ -50,7 +50,6 @@ st.markdown("""
     .total-label-text { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
     .total-price-text { font-size: 24px; font-weight: bold; color: #FF6B00; }
     
-    /* El bloque de vista previa plano permanece oculto en la web */
     .print-only-block { display: none; }
 
     /* ---------------- REGLAS DE IMPRESIÓN DIRECTA NATIVA (PDF) ---------------- */
@@ -89,7 +88,7 @@ st.markdown("""
         }
         .logo-right { 
             display: block !important; 
-            width: 340px !important; /* Preserva escala grande en papel */
+            width: 340px !important; 
             max-width: 340px !important;
             height: auto !important;
         }
@@ -164,7 +163,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-all_incoterms = ["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP", "FAS", "FOB", "CFR", "CIF"]
+all_incoterms = ["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP", "DDU", "FAS", "FOB", "CFR", "CIF"]
 
 # ---------------- CONTROLES INTERACTIVOS (SÓLO PANTALLA) ----------------
 col1, col2 = st.columns([1, 1])
@@ -209,10 +208,35 @@ with col1:
     etd_date = st.date_input("Fecha Salida (ETD)", value=datetime.today() + timedelta(days=7))
     eta_date = st.date_input("Fecha Llegada (ETA)", value=datetime.today() + timedelta(days=21))
 
+# --- DETERMINACIÓN DE RANGOS DE TEXTO E IMPORTE DE CÁLCULO ---
+rango_texto_terminal = ""
+if incoterm == "DAP" and modalidad == "Maritimo" and tipo_eq == "FCL":
+    rango_texto_terminal = "USD 800.00 / USD 1,400.00"
+    default_terminal_calc = 1400.0
+elif incoterm == "DAP" and modalidad == "Maritimo" and tipo_eq == "LCL":
+    rango_texto_terminal = "USD 500.00 / USD 1,000.00"
+    default_terminal_calc = 1000.0
+elif incoterm == "DDU" and modalidad == "Maritimo" and tipo_eq == "FCL":
+    rango_texto_terminal = "USD 1,400.00"
+    default_terminal_calc = 1400.0
+elif incoterm == "EXW" and modalidad == "Maritimo" and tipo_eq == "FCL":
+    rango_texto_terminal = "USD 650.00"
+    default_terminal_calc = 650.0
+elif incoterm == "EXW" and modalidad == "Maritimo" and tipo_eq == "LCL":
+    rango_texto_terminal = "USD 550.00"
+    default_terminal_calc = 550.0
+else:
+    rango_texto_terminal = "USD 500.00 / USD 1,000.00"
+    default_terminal_calc = 1000.0
+
 with col2:
     st.markdown('<div class="section-header">2. Tarifas</div>', unsafe_allow_html=True)
     flete_intl = st.number_input("Flete Internacional Base (USD)", min_value=0.0, value=1850.0)
-    gastos_term = st.number_input("Gastos Terminal / Depósito (USD)", min_value=0.0, value=650.0)
+    
+    # Campo interactivo descriptivo del rango en pantalla
+    st.text(f"Rango de Terminal sugerido: {rango_texto_terminal}")
+    gastos_term = st.number_input("Gastos Terminal / Depósito de Cálculo (USD)", min_value=0.0, value=default_terminal_calc)
+    
     apply_delivery = st.checkbox("¿Aplica Flete Interno / Delivery?", value=True)
     
     if apply_delivery:
@@ -236,7 +260,6 @@ with col2:
         
         honorarios_finales = max(275.0, valor_mercaderia * 0.007)
         broker_cost = honorarios_finales + 150.0 + 65.0
-        
         st.caption(f"📋 **Despacho:** Hon: USD {honorarios_finales:,.2f} | Gastos: USD 150.00 | Dig: USD 65.00")
         
         apply_taxes = st.checkbox("¿Aplica liquidación de Duties & Taxes?", value=False)
@@ -254,7 +277,6 @@ with col2:
             tax_add_vat = valor_mercaderia * (input_add_vat / 100)
             tax_other = valor_mercaderia * (input_other / 100)
 
-    # NUEVO CAMPO LIBRE SOLICITADO: CONCEPTO FIJO ADICIONAL MANUAL EDITABLE
     st.markdown('<div class="section-header">Concepto Fijo Adicional (Opcional)</div>', unsafe_allow_html=True)
     manual_concepto = st.text_input("Nombre del Gasto Extra", value="")
     col_m1, col_t2 = st.columns(2)
@@ -263,16 +285,16 @@ with col2:
     with col_t2:
         manual_precio = st.number_input("Monto Neto (USD)", min_value=0.0, value=0.0, step=5.0)
 
-# -------------- LÓGICA DE OCULTACIÓN DE TARIFAS EN 0 EN EL PDF --------------
+# -------------- RENDIMIENTO DEL PDF DE IMPRESIÓN DIRECTA SIN CEROS --------------
 print_tarifas_html = ""
 if flete_intl > 0:
     print_tarifas_html += f'<div class="data-item-print"><b>Flete Internacional Base:</b> USD {flete_intl:,.2f}</div>'
 if gastos_term > 0:
-    print_tarifas_html += f'<div class="data-item-print"><b>Gastos Terminal / Depósito:</b> USD {gastos_term:,.2f}</div>'
+    # Muestra el texto exacto con el rango en la impresión final
+    print_tarifas_html += f'<div class="data-item-print"><b>Gastos Terminal / Depósito:</b> {rango_texto_terminal if " / " in rango_texto_terminal else f"USD {gastos_term:,.2f}"}</div>'
 if delivery_cost > 0:
     print_tarifas_html += f'<div class="data-item-print"><b>Logística Interna / Delivery:</b> USD {delivery_cost:,.2f} (Desde {del_from} hasta {del_to})</div>'
 
-# Renderizado dinámico del bypass sin ceros
 st.markdown(f"""
 <div class="print-only-block">
     <div class="section-header">1. Información General</div>
@@ -415,7 +437,6 @@ filtered_df = df_base[
     (df_base['TipoEquipamiento'] == tipo_eq)
 ].copy()
 
-# CÁLCULOS OPERATIVOS CENTRALES
 fijos_total = 0.0
 fijos_iva = 0.0
 rows_to_render = []
@@ -453,20 +474,15 @@ if not filtered_df.empty:
             "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
         })
 
-# AGREGAR EL CONCEPTO MANUAL SOLO SI TIENE UN NOMBRE Y PRECIO MAYOR A CERO
 manual_cost_total = 0.0
 if manual_concepto.strip() != "" and manual_precio > 0:
     manual_subtotal = manual_precio * cantidad
-    # Si es para perfil Cliente, le aplicamos IVA del 21% de forma equivalente
     manual_iva = manual_subtotal * 0.21 if destinatario == "Cliente" else 0.0
     manual_cost_total = manual_subtotal + manual_iva
     
     rows_to_render.append({
-        "Concepto": manual_concepto.strip(),
-        "Unidad": manual_unidad,
-        "Moneda": "USD",
-        "Tarifa Base": f"USD {manual_precio:,.2f}",
-        "Subtotal": f"USD {manual_subtotal:,.2f}",
+        "Concepto": manual_concepto.strip(), "Unidad": manual_unidad, "Moneda": "USD",
+        "Tarifa Base": f"USD {manual_precio:,.2f}", "Subtotal": f"USD {manual_subtotal:,.2f}",
         "IVA (21%)": f"USD {manual_iva:,.2f}" if destinatario == "Cliente" else "Exento"
     })
 
@@ -482,7 +498,16 @@ if rows_to_render:
 else:
     st.info("No se registran cargos fijos adicionales parametrizados para este perfil.")
 
-# Totales Consolidados finales incluyendo el concepto manual dinámico
+if apply_broker and 'apply_taxes' in locals() and apply_taxes:
+    st.markdown('<div class="section-header">5. Duties & Taxes</div>', unsafe_allow_html=True)
+    df_impuestos = pd.DataFrame([
+        {"Impuesto / Concepto Fiscal": "Duty / Derechos de Importación", "Tasa Gravamen": f"{input_duty}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_duty:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "VAT / IVA General", "Tasa Gravamen": f"{input_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_vat:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "Additional VAT / IVA Adicional", "Tasa Gravamen": f"{input_add_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_add_vat:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "Other taxes / Tasa Estadística y Otros", "Tasa Gravamen": f"{input_other}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_other:,.2f}"}
+    ])
+    st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
+
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + manual_cost_total
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
@@ -503,9 +528,13 @@ if modalidad == "Maritimo":
     clausula_final += f"TIEMPOS DE DESTINO: Transit Time estimado en {tt_days} días con un período de {free_days} días libres en destino.<br>"
 if apply_delivery and delivery_cost > 0:
     clausula_final += f"ENTREGA TERRESTRE: Delivery programado desde {del_from} hasta {del_to} por un importe de USD {delivery_cost:,.2f}.<br>"
+
+# NUEVA LEYENDA ADICIONAL DE RANGOS APROXIMADOS SOLICITADA
+if " / " in rango_texto_terminal:
+    clausula_final += f"GASTOS DE DEPOSITARIO: Los costos de Terminal / Depósito detallados como {rango_texto_terminal} representan valores aproximados sujetos a la tarifa del depósito fiscal definitivo al momento del arribo.<br>"
+
 if apply_broker:
     clausula_final += f"DESPACHO DE ADUANA: Coordinado bajo modalidad {operacion} por cuenta de AGT Broker (Posición Arancelaria: {pa_code}).<br>"
-
 if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     clausula_final += "IMPUESTOS: Duties and taxes no incluidos en la cotización comercial.<br>"
 
