@@ -52,18 +52,15 @@ st.markdown("""
 
     /* REGLAS DE IMPRESIÓN DIRECTA ULTRA COMPACTA Y SIN RECUADROS */
     @media print {
-        /* Ocultar elementos de la interfaz de Streamlit */
         [data-testid="stSidebar"], [data-testid="stHeader"], footer, header, .print-section, iframe, .stCheckbox, 
         button, .step-up, .step-down, div[data-testid="stInputNumber-StepUp"], div[data-testid="stInputNumber-StepDown"] { 
             display: none !important; 
         }
         
-        /* Ajustar márgenes de página */
         @page {
             margin: 0.6cm !important;
         }
         
-        /* Eliminar por completo los bloques contenedores y recuadros celestes/grises de Streamlit */
         div[data-testid="stBlock"], div[data-testid="stVerticalBlock"], div[data-testid="stHorizontalBlock"], .stWidget {
             background-color: transparent !important;
             background: transparent !important;
@@ -74,20 +71,17 @@ st.markdown("""
             gap: 0 !important;
         }
 
-        /* Compactar la distancia entre cada fila de datos */
         .element-container {
             margin-bottom: 1px !important;
             padding-bottom: 1px !important;
         }
         
-        /* Tipografía nítida y tamaño equilibrado */
         body, p, div, span, td, th {
             font-size: 11.5pt !important; 
             color: #111111 !important;
             font-family: 'Segoe UI', Arial, sans-serif !important;
         }
         
-        /* Forzar inputs limpios y planos sin recuadros celestes de fondo ni bordes */
         input, select, textarea, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput div, .stNumberInput div {
             border: none !important;
             background: transparent !important;
@@ -99,12 +93,10 @@ st.markdown("""
             margin: 0 !important;
         }
         
-        /* Ocultar flechas selectores web */
         div[data-baseweb="select"] button, div[role="button"] {
             display: none !important;
         }
         
-        /* Mantener la cabecera idéntica a la pantalla con el logo en su tamaño original */
         .header-container { 
             display: flex !important; 
             justify-content: space-between !important;
@@ -115,7 +107,7 @@ st.markdown("""
         }
         .logo-right { 
             display: block !important; 
-            max-width: 180px !important; /* Mantiene la escala de la pantalla */
+            max-width: 180px !important; 
             height: auto !important;
         }
         .quote-title-left { display: block !important; font-size: 18pt !important; }
@@ -131,7 +123,7 @@ st.markdown("""
 st.sidebar.markdown("### 👥 Perfil Comercial")
 destinatario = st.sidebar.selectbox("Tipo de Destinatario", ["Cliente", "Agente"])
 
-# Cabecera idéntica para pantalla y PDF
+# Cabecera
 st.markdown(f"""
 <div class="header-container">
     <div class="quote-title-left">COTIZACIÓN DE EMBARQUE</div>
@@ -198,12 +190,13 @@ with col2:
     else:
         delivery_cost, del_from, del_to = 0.0, "N/A", "N/A"
 
+    # MÓDULO INTERACTIVO DE CUSTOMS BROKER & TAXES
     st.markdown('<div class="section-header">3. Servicios de Aduana</div>', unsafe_allow_html=True)
     apply_broker = st.checkbox("¿Aplica Customs Broker?", value=False)
     
     broker_cost = 0.0
-    taxes_cost = 0.0
     pa_code = "N/A"
+    apply_taxes = False
     
     if apply_broker:
         pa_code = st.text_input("HS Code / PA", value="8471.30.12")
@@ -223,7 +216,7 @@ with col2:
         
         apply_taxes = st.checkbox("¿Aplica liquidación de Duties & Taxes?", value=False)
         if apply_taxes:
-            st.markdown("**Duties & Taxes (Editables):**")
+            st.markdown("**Duties & Taxes (Campos de entrada libres):**")
             col_t1, col_t2 = st.columns(2)
             with col_t1:
                 input_duty = st.number_input("Duty / Arancel (%)", min_value=0.0, value=16.0, step=0.5)
@@ -237,7 +230,7 @@ with col2:
             tax_add_vat = valor_mercaderia * (input_add_vat / 100)
             tax_other = valor_mercaderia * (input_other / 100)
             
-            taxes_cost = tax_duty + tax_vat + tax_add_vat + tax_other
+            st.caption(f"💵 **Duties & Taxes Informativo:** USD {(tax_duty + tax_vat + tax_add_vat + tax_other):,.2f} (No se incluirá en el total)")
 
 # ----------------- BASE DE DATOS TARIFARIO -----------------
 tarifario_AGT = [
@@ -362,6 +355,7 @@ filtered_df = df_base[
     (df_base['TipoEquipamiento'] == tipo_eq)
 ].copy()
 
+# CÁLCULOS OPERATIVOS
 fijos_total = 0.0
 fijos_iva = 0.0
 rows_to_render = []
@@ -370,8 +364,8 @@ if not filtered_df.empty:
     for index, row in filtered_df.iterrows():
         concepto = row['Concepto']
         unidad = row['UnidadBase']
-        
         precio_base = row['Precio20']
+        
         if modalidad == "Maritimo" and tipo_eq == "FCL":
             if container_size == "40' HQ / Standard": precio_base = row['Precio40']
             elif container_size == "Reefer (RF)": precio_base = row['PrecioRF']
@@ -379,31 +373,23 @@ if not filtered_df.empty:
         subtotal_item = precio_base * cantidad
         
         if "tn/m3 min usd 70" in unidad:
-            calculo_wm = precio_base * ton_m3 * cantidad
-            subtotal_item = max(70.0 * cantidad, calculo_wm)
+            subtotal_item = max(70.0 * cantidad, precio_base * ton_m3 * cantidad)
         elif "tn min usd 4" in unidad:
-            calculo_agp = precio_base * ton_m3 * cantidad
-            subtotal_item = max(4.0 * cantidad, calculo_agp)
+            subtotal_item = max(4.0 * cantidad, precio_base * ton_m3 * cantidad)
         elif "x bulto min usd 20" in unidad:
-            calculo_aereo = precio_base * cantidad
-            subtotal_item = max(20.0, calculo_aereo)
+            subtotal_item = max(20.0, precio_base * cantidad)
         elif "3% s/AWB min usd 50" in unidad:
             subtotal_item = max(50.0, flete_intl * 0.03)
         elif "x guía min usd 20" in unidad:
-            calculo_tca = (0.02 * peso_kg + 10) * cantidad
-            subtotal_item = max(20.0 * cantidad, calculo_tca)
+            subtotal_item = max(20.0 * cantidad, (0.02 * peso_kg + 10) * cantidad)
             
         iva_item = subtotal_item * 0.21 if row['AplicaIVA'] else 0.0
-        
         fijos_total += subtotal_item
         fijos_iva += iva_item
         
         rows_to_render.append({
-            "Concepto": concepto,
-            "Unidad": unidad,
-            "Moneda": "USD",
-            "Tarifa Base": f"USD {precio_base:,.2f}",
-            "Subtotal": f"USD {subtotal_item:,.2f}",
+            "Concepto": concepto, "Unidad": unidad, "Moneda": "USD",
+            "Tarifa Base": f"USD {precio_base:,.2f}", "Subtotal": f"USD {subtotal_item:,.2f}",
             "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
         })
 
@@ -419,18 +405,8 @@ if rows_to_render:
 else:
     st.info("No se registran cargos fijos adicionales parametrizados para este perfil.")
 
-if apply_broker and 'apply_taxes' in locals() and apply_taxes:
-    st.markdown('<div class="section-header">5. Duties & Taxes</div>', unsafe_allow_html=True)
-    df_impuestos = pd.DataFrame([
-        {"Impuesto / Concepto Fiscal": "Duty / Derechos de Importación", "Tasa Gravamen": f"{input_duty}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_duty:,.2f}"},
-        {"Impuesto / Concepto Fiscal": "VAT / IVA General", "Tasa Gravamen": f"{input_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_vat:,.2f}"},
-        {"Impuesto / Concepto Fiscal": "Additional VAT / IVA Adicional", "Tasa Gravamen": f"{input_add_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_add_vat:,.2f}"},
-        {"Impuesto / Concepto Fiscal": "Other taxes / Tasa Estadística y Otros", "Tasa Gravamen": f"{input_other}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_other:,.2f}"}
-    ])
-    st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
-
-# Totales Consolidados finales
-gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + taxes_cost
+# El total final contempla fijos, flete, terminal y distribución; Duties & Taxes NO se suman al total a demanda del usuario
+gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
 st.markdown(f'''
@@ -452,6 +428,10 @@ if apply_delivery:
     clausula_final += f"ENTREGA TERRESTRE: Delivery programado desde {del_from} hasta {del_to} por un importe de USD {delivery_cost:,.2f}.<br>"
 if apply_broker:
     clausula_final += f"DESPACHO DE ADUANA: Coordinado bajo modalidad {operacion} por cuenta de AGT Broker (Posición Arancelaria: {pa_code}).<br>"
+
+# Inyección condicional de la cláusula tributaria protectora
+if apply_broker and apply_taxes:
+    clausula_final += "IMPUESTOS: Duties and taxes no incluidos en la cotización comercial.<br>"
 
 clausula_final += "REGULACIONES: Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
