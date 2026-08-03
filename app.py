@@ -384,7 +384,7 @@ tarifario_AGT = [
     ["Cliente", "Maritimo", "Exportacion", "LCL", "VGM", "x BL", 25.00, 25.00, 25.00, True],
 ]
 
-# --- LÓGICA CONDICIONAL DE FLUJO EXPO/IMPO PARA FOB MARÍTIMO ---
+# --- LÓGICA CONDICIONAL DE FLUJO EXPO/IMPO PARA FOB MARÍTIMO CON IVA EXENTO ---
 is_fob_maritimo = (incoterm == "FOB" and modalidad == "Maritimo")
 
 fijos_total = 0.0
@@ -395,37 +395,31 @@ if is_fob_maritimo:
     if operacion == "Exportacion":
         if tipo_eq == "FCL":
             subtotal_fob = 50.0 * cantidad
-            iva_fob = subtotal_fob * 0.21 if destinatario == "Cliente" else 0.0
             fijos_total += subtotal_fob
-            fijos_iva += iva_fob
             
             rows_to_render.append({
                 "Concepto": "Profit Share AGT (FCL) *Tarifas netas, nuestro Profit Share es USD 50 / *Flete Collect / *Sujeto a disponibilidad y espacio.",
                 "Unidad": "x Contenedor", "Moneda": "USD", "Tarifa Base": "USD 50.00",
-                "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": f"USD {iva_fob:,.2f}" if destinatario == "Cliente" else "Exento"
+                "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": "Exento"
             })
         elif tipo_eq == "LCL":
             subtotal_fob = 25.0 * cantidad
-            iva_fob = subtotal_fob * 0.21 if destinatario == "Cliente" else 0.0
             fijos_total += subtotal_fob
-            fijos_iva += iva_fob
             
             rows_to_render.append({
                 "Concepto": "Profit Share AGT (LCL) *Tarifas netas, nuestro Profit Share es USD 25 / *Collect / *Sujeto a disponibilidad y espacio",
                 "Unidad": "x Envío", "Moneda": "USD", "Tarifa Base": "USD 25.00",
-                "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": f"USD {iva_fob:,.2f}" if destinatario == "Cliente" else "Exento"
+                "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": "Exento"
             })
     else:
         monto_profit_impo = 50.0 if tipo_eq == "FCL" else 25.0
         subtotal_fob = monto_profit_impo * cantidad
-        iva_fob = subtotal_fob * 0.21 if destinatario == "Cliente" else 0.0
         fijos_total += subtotal_fob
-        fijos_iva += iva_fob
         
         rows_to_render.append({
             "Concepto": f"Profit Share AGT ({tipo_eq})",
             "Unidad": "x Unidad" if tipo_eq == "FCL" else "x Envío", "Moneda": "USD", "Tarifa Base": f"USD {monto_profit_impo:,.2f}",
-            "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": f"USD {iva_fob:,.2f}" if destinatario == "Cliente" else "Exento"
+            "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": "Exento"
         })
 else:
     df_base = pd.DataFrame(tarifario_AGT, columns=["Destinatario", "Modalidad", "Operacion", "TipoEquipamiento", "Concepto", "UnidadBase", "Precio20", "Precio40", "PrecioRF", "AplicaIVA"])
@@ -469,6 +463,7 @@ else:
                 "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
             })
 
+# Inyección del concepto manual opcional con IVA según perfil si no es exento por defecto
 manual_cost_total = 0.0
 if manual_concepto.strip() != "" and manual_precio > 0:
     manual_subtotal = manual_precio * cantidad
@@ -533,7 +528,7 @@ if apply_broker:
 if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     clausula_final += "IMPUESTOS: Duties and taxes no incluidos en la cotización comercial.<br>"
 
-clausula_final += "REGULACIONES: Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
+clausula_final += "REGULACIONES: Las cotizaciones están sugeras a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
 st.markdown(f'<div class="clause-box">{clausula_final}</div>', unsafe_allow_html=True)
 
