@@ -50,34 +50,59 @@ st.markdown("""
     .total-label-text { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
     .total-price-text { font-size: 24px; font-weight: bold; color: #FF6B00; }
 
+    /* REGLAS DE IMPRESIÓN DIRECTA ULTRA COMPACTA Y LIMPIA */
     @media print {
-        [data-testid="stSidebar"], [data-testid="stHeader"], footer, header, .print-section, iframe, .stCheckbox { 
+        /* Ocultar barra lateral, cabeceras web, botones y elementos interactivos */
+        [data-testid="stSidebar"], [data-testid="stHeader"], footer, header, .print-section, iframe, .stCheckbox, 
+        button, .step-up, .step-down, div[data-testid="stInputNumber-StepUp"], div[data-testid="stInputNumber-StepDown"] { 
             display: none !important; 
         }
+        
+        /* Reducir márgenes de página generales para ganar espacio vertical */
+        @page {
+            margin: 0.8cm !important;
+        }
+        
+        /* Ajustar espaciados de Streamlit al mínimo para compactar en una hoja */
+        div[data-testid="stVerticalBlock"] {
+            gap: 0.2rem !important;
+        }
+        .element-container {
+            margin-bottom: 2px !important;
+        }
+        
+        /* Forzar tipografía nítida y un poco más compacta */
         body, p, div, span, td, th {
-            font-size: 13.5pt !important; 
+            font-size: 11pt !important; 
             color: #111111 !important;
             font-family: 'Segoe UI', Arial, sans-serif !important;
         }
-        input, select, textarea {
+        
+        /* SACAR RECUADROS GRISES/CELESTES: Forzar inputs limpios y planos sin fondo */
+        input, select, textarea, div[data-baseweb="input"], div[data-baseweb="select"] {
             border: none !important;
             background: transparent !important;
+            background-color: transparent !important;
             box-shadow: none !important;
-            font-size: 13.5pt !important;
+            font-size: 11pt !important;
             font-weight: bold !important;
             padding: 0 !important;
+            margin-top: -4px !important;
         }
+        
+        /* Ocultar flechas selectores web */
         div[data-baseweb="select"] button, div[role="button"] {
             display: none !important;
         }
-        .header-container { display: flex !important; border-bottom: 2px solid #0B2240 !important; }
-        .logo-right { display: block !important; max-width: 180px !important; }
-        .quote-title-left { display: block !important; font-size: 18pt !important; }
-        .section-header { display: flex !important; border-left: 5px solid #FF6B00 !important; font-size: 14pt !important; }
-        .clause-box { display: block !important; background-color: #FFFDF5 !important; border: 1px solid #FFEBAA !important; }
-        .print-card { display: block !important; background-color: #F8FAFC !important; border: 1px solid #E2E8F0 !important; }
-        .total-row-container { display: flex !important; background-color: #0B2240 !important; }
-        .total-price-text { color: #FF6B00 !important; font-size: 22pt !important; }
+        
+        /* Mantener la estructura limpia */
+        .header-container { display: flex !important; border-bottom: 2px solid #0B2240 !important; margin-bottom: 10px !important; }
+        .logo-right { display: block !important; max-width: 150px !important; }
+        .quote-title-left { display: block !important; font-size: 16pt !important; }
+        .section-header { display: flex !important; border-left: 5px solid #FF6B00 !important; font-size: 12pt !important; margin-top: 8px !important; margin-bottom: 4px !important; }
+        .clause-box { display: block !important; background-color: #FFFDF5 !important; border: 1px solid #FFEBAA !important; padding: 8px !important; }
+        .total-row-container { display: flex !important; background-color: #0B2240 !important; padding: 8px 15px !important; margin-top: 10px !important; }
+        .total-price-text { color: #FF6B00 !important; font-size: 18pt !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -153,7 +178,7 @@ with col2:
     else:
         delivery_cost, del_from, del_to = 0.0, "N/A", "N/A"
 
-    # MÓDULO INTERACTIVO DE CUSTOMS BROKER & TAXES RECONFIGURADO
+    # MÓDULO INTERACTIVO DE CUSTOMS BROKER & TAXES
     st.markdown('<div class="section-header">3. Servicios de Aduana</div>', unsafe_allow_html=True)
     apply_broker = st.checkbox("¿Aplica Customs Broker?", value=False)
     
@@ -175,18 +200,18 @@ with col2:
         broker_cost = broker_total_item
         
         tipo_honorario_lbl = "0.7% Valor FOB (Min 275)" if operacion == "Exportacion" else "0.7% Valor CIF (Min 275)"
-        st.caption(f"📋 **Despacho Aduanero ({operacion}):** Hon. Despacho: USD {honorarios_finales:,.2f} ({tipo_honorario_lbl}) | Gastos: USD 150.00 | Digitalización: USD 65.00")
+        st.caption(f"📋 **Despacho:** Hon: USD {honorarios_finales:,.2f} | Gastos: USD 150.00 | Dig: USD 65.00")
         
         apply_taxes = st.checkbox("¿Aplica liquidación de Duties & Taxes?", value=False)
         if apply_taxes:
-            st.markdown("**Duties & Taxes (Editables según PA / HTS):**")
+            st.markdown("**Duties & Taxes (Editables):**")
             col_t1, col_t2 = st.columns(2)
             with col_t1:
                 input_duty = st.number_input("Duty / Arancel (%)", min_value=0.0, value=16.0, step=0.5)
                 input_vat = st.number_input("VAT / IVA (%)", min_value=0.0, value=10.5, step=0.5)
             with col_t2:
-                input_add_vat = st.number_input("Additional VAT / IVA Adic. (%)", min_value=0.0, value=10.0, step=0.5)
-                input_other = st.number_input("Other taxes / Tasa Est. (%)", min_value=0.0, value=8.5, step=0.5)
+                input_add_vat = st.number_input("Additional VAT (%)", min_value=0.0, value=10.0, step=0.5)
+                input_other = st.number_input("Other taxes (%)", min_value=0.0, value=8.5, step=0.5)
             
             tax_duty = valor_mercaderia * (input_duty / 100)
             tax_vat = valor_mercaderia * (input_vat / 100)
@@ -194,7 +219,6 @@ with col2:
             tax_other = valor_mercaderia * (input_other / 100)
             
             taxes_cost = tax_duty + tax_vat + tax_add_vat + tax_other
-            st.caption(f"💵 **Total Impuestos Proyectados:** USD {taxes_cost:,.2f}")
 
 # ----------------- BASE DE DATOS TARIFARIO -----------------
 tarifario_AGT = [
@@ -364,7 +388,6 @@ if not filtered_df.empty:
             "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
         })
 
-# Inyección dinámica de las líneas de despacho aduanero puro
 if apply_broker:
     tipo_h_lbl = "0.7% FOB (Min 275)" if operacion == "Exportacion" else "0.7% CIF (Min 275)"
     rows_to_render.append({"Concepto": "Hon. Despacho", "Unidad": tipo_h_lbl, "Moneda": "USD", "Tarifa Base": "Variable", "Subtotal": f"USD {max(275.0, valor_mercaderia*0.007):,.2f}", "IVA (21%)": "Exento"})
@@ -377,9 +400,8 @@ if rows_to_render:
 else:
     st.info("No se registran cargos fijos adicionales parametrizados para este perfil.")
 
-# Modificación solicitada: si se calculan Duties & Taxes, se exponen debajo pero no se inyectan a la tabla de conceptos fijos locales
 if apply_broker and 'apply_taxes' in locals() and apply_taxes:
-    st.markdown('<div class="section-header">5. Liquidación de Impuestos Coadyuvantes (Duties & Taxes)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">5. Duties & Taxes</div>', unsafe_allow_html=True)
     df_impuestos = pd.DataFrame([
         {"Impuesto / Concepto Fiscal": "Duty / Derechos de Importación", "Tasa Gravamen": f"{input_duty}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_duty:,.2f}"},
         {"Impuesto / Concepto Fiscal": "VAT / IVA General", "Tasa Gravamen": f"{input_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_vat:,.2f}"},
@@ -388,7 +410,7 @@ if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     ])
     st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
 
-# Totales Consolidados finales incluyendo Aduana e Impuestos (Duties & Taxes no se suman si no se requiere, pero sí al gran total final)
+# Totales Consolidados finales
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + taxes_cost
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
@@ -401,7 +423,7 @@ st.markdown(f'''
 ''', unsafe_allow_html=True)
 
 # Cláusulas legales operativas limpias de asteriscos y negritas repetitivas
-st.markdown('<div class="section-header">6. Términos Legales y Validez del Servicio</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">5. Términos Legales y Validez del Servicio</div>', unsafe_allow_html=True)
 
 clausula_final = f"VALIDEZ TEMPORAL: Esta propuesta es válida hasta el {fecha_validez.strftime('%d/%m/%Y')} (5 días desde su emisión).<br>"
 clausula_final += f"TRANSPORTE ASIGNADO: Medio coordinado vía {nombre_transporte}.<br>"
@@ -414,7 +436,7 @@ if apply_delivery:
 if apply_broker:
     clausula_final += f"DESPACHO DE ADUANA: Coordinado bajo modalidad {operacion} por cuenta de AGT Broker (Posición Arancelaria: {pa_code}).<br>"
 
-clausula_final += "REGULACIONES: Las cotizaciones están sugeras a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
+clausula_final += "REGULACIONES: Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
 st.markdown(f'<div class="clause-box">{clausula_final}</div>', unsafe_allow_html=True)
 
