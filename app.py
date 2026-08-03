@@ -19,12 +19,12 @@ st.markdown("""
         flex-wrap: nowrap;
     }
     .logo-right { 
-        max-width: 180px; 
+        max-width: 260px; /* Tamaño original de pantalla restablecido */
         height: auto; 
         border-radius: 2px; 
     }
     .quote-title-left { 
-        font-size: 18px; 
+        font-size: 20px; 
         font-weight: bold; 
         color: #0B2240; 
         font-family: 'Segoe UI', sans-serif;
@@ -50,7 +50,7 @@ st.markdown("""
     .total-label-text { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
     .total-price-text { font-size: 24px; font-weight: bold; color: #FF6B00; }
 
-    /* REGLAS DE IMPRESIÓN DIRECTA ULTRA COMPACTA Y SIN RECUADROS */
+    /* REGLAS DE IMPRESIÓN DIRECTA NATIVA Y ELIMINACIÓN DE RECUADROS DE TEXTO */
     @media print {
         [data-testid="stSidebar"], [data-testid="stHeader"], footer, header, .print-section, iframe, .stCheckbox, 
         button, .step-up, .step-down, div[data-testid="stInputNumber-StepUp"], div[data-testid="stInputNumber-StepDown"] { 
@@ -58,10 +58,12 @@ st.markdown("""
         }
         
         @page {
-            margin: 0.6cm !important;
+            margin: 0.8cm !important;
         }
         
-        div[data-testid="stBlock"], div[data-testid="stVerticalBlock"], div[data-testid="stHorizontalBlock"], .stWidget {
+        /* Limpieza absoluta de contenedores e interfaces grises/celestes en el DOM impreso */
+        div[data-testid="stBlock"], div[data-testid="stVerticalBlock"], div[data-testid="stHorizontalBlock"], .stWidget,
+        div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput div, .stNumberInput div, div[data-testid="stMarkdownContainer"] div {
             background-color: transparent !important;
             background: transparent !important;
             border: none !important;
@@ -71,9 +73,13 @@ st.markdown("""
             gap: 0 !important;
         }
 
+        /* Achicar al máximo el espacio entre el título del campo y su valor completado */
         .element-container {
+            margin-top: 1px !important;
             margin-bottom: 1px !important;
+            padding-top: 0px !important;
             padding-bottom: 1px !important;
+            line-height: 1.1 !important;
         }
         
         body, p, div, span, td, th {
@@ -82,7 +88,8 @@ st.markdown("""
             font-family: 'Segoe UI', Arial, sans-serif !important;
         }
         
-        input, select, textarea, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput div, .stNumberInput div {
+        /* Forzar visualización de campos limpios sin recuadro redondeado azul/celeste */
+        input, select, textarea {
             border: none !important;
             background: transparent !important;
             background-color: transparent !important;
@@ -91,29 +98,40 @@ st.markdown("""
             font-weight: bold !important;
             padding: 0 !important;
             margin: 0 !important;
+            display: block !important;
         }
         
         div[data-baseweb="select"] button, div[role="button"] {
             display: none !important;
         }
         
+        /* Cabecera idéntica a pantalla con Logo original y sin solapamientos */
         .header-container { 
             display: flex !important; 
             justify-content: space-between !important;
             align-items: center !important;
             border-bottom: 2px solid #0B2240 !important; 
-            margin-bottom: 10px !important; 
+            margin-bottom: 15px !important; 
             padding-bottom: 6px !important;
         }
         .logo-right { 
             display: block !important; 
-            max-width: 180px !important; 
+            max-width: 260px !important; /* Tamaño nítido y original */
             height: auto !important;
         }
-        .quote-title-left { display: block !important; font-size: 18pt !important; }
-        .section-header { display: flex !important; border-left: 5px solid #FF6B00 !important; font-size: 12pt !important; margin-top: 8px !important; margin-bottom: 4px !important; }
-        .clause-box { display: block !important; background-color: #FFFDF5 !important; border: 1px solid #FFEBAA !important; padding: 8px !important; }
-        .total-row-container { display: flex !important; background-color: #0B2240 !important; padding: 8px 15px !important; margin-top: 10px !important; }
+        .quote-title-left { display: block !important; font-size: 20pt !important; }
+        
+        /* Evita que los términos pisen el título superior de sección */
+        .section-header { 
+            display: flex !important; 
+            border-left: 5px solid #FF6B00 !important; 
+            font-size: 12pt !important; 
+            margin-top: 20px !important; 
+            margin-bottom: 8px !important; 
+            padding-top: 5px !important;
+        }
+        .clause-box { display: block !important; background-color: #FFFDF5 !important; border: 1px solid #FFEBAA !important; padding: 10px !important; margin-top: 5px !important; }
+        .total-row-container { display: flex !important; background-color: #0B2240 !important; padding: 8px 15px !important; margin-top: 15px !important; }
         .total-price-text { color: #FF6B00 !important; font-size: 18pt !important; }
     }
 </style>
@@ -190,7 +208,6 @@ with col2:
     else:
         delivery_cost, del_from, del_to = 0.0, "N/A", "N/A"
 
-    # MÓDULO INTERACTIVO DE CUSTOMS BROKER & TAXES
     st.markdown('<div class="section-header">3. Servicios de Aduana</div>', unsafe_allow_html=True)
     apply_broker = st.checkbox("¿Aplica Customs Broker?", value=False)
     
@@ -355,7 +372,6 @@ filtered_df = df_base[
     (df_base['TipoEquipamiento'] == tipo_eq)
 ].copy()
 
-# CÁLCULOS OPERATIVOS
 fijos_total = 0.0
 fijos_iva = 0.0
 rows_to_render = []
@@ -405,7 +421,7 @@ if rows_to_render:
 else:
     st.info("No se registran cargos fijos adicionales parametrizados para este perfil.")
 
-# El total final contempla fijos, flete, terminal y distribución; Duties & Taxes NO se suman al total a demanda del usuario
+# El total final contempla fijos, flete, terminal y distribución; Duties & Taxes NO se suman al total
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
@@ -429,7 +445,6 @@ if apply_delivery:
 if apply_broker:
     clausula_final += f"DESPACHO DE ADUANA: Coordinado bajo modalidad {operacion} por cuenta de AGT Broker (Posición Arancelaria: {pa_code}).<br>"
 
-# Inyección condicional de la cláusula tributaria protectora
 if apply_broker and apply_taxes:
     clausula_final += "IMPUESTOS: Duties and taxes no incluidos en la cotización comercial.<br>"
 
