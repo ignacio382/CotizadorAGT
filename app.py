@@ -6,9 +6,10 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="AGT - Cotizador Multimodal Profesional", page_icon="🌐", layout="wide")
 
-# Estilos visuales con la identidad de AGT optimizados para pantalla e impresión directa legible
+# Estilos visuales con la identidad de AGT optimizados para pantalla e impresión directa limpia
 st.markdown("""
 <style>
+    /* ---------------- ESTILOS DE PANTALLA (WEB) ---------------- */
     .header-container {
         display: flex;
         justify-content: space-between;
@@ -19,7 +20,7 @@ st.markdown("""
         flex-wrap: nowrap;
     }
     .logo-right { 
-        max-width: 260px; /* Tamaño original de pantalla restablecido */
+        max-width: 260px; 
         height: auto; 
         border-radius: 2px; 
     }
@@ -40,7 +41,6 @@ st.markdown("""
         margin-bottom: 10px;
     }
     .clause-box { background-color: #FFFDF5; border: 1px solid #FFEBAA; padding: 12px; border-radius: 6px; font-size: 13.0px; color: #333333; line-height: 1.4; }
-    .print-card { background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 13.0px; }
     
     .total-row-container {
         display: flex; justify-content: flex-end; align-items: center; gap: 15px;
@@ -49,90 +49,109 @@ st.markdown("""
     }
     .total-label-text { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
     .total-price-text { font-size: 24px; font-weight: bold; color: #FF6B00; }
+    
+    /* El bloque de vista previa plano permanece oculto en la web */
+    .print-only-block { display: none; }
 
-    /* REGLAS DE IMPRESIÓN DIRECTA NATIVA Y ELIMINACIÓN DE RECUADROS DE TEXTO */
+    /* ---------------- REGLAS DE IMPRESIÓN DIRECTA NATIVA (PDF) ---------------- */
     @media print {
-        [data-testid="stSidebar"], [data-testid="stHeader"], footer, header, .print-section, iframe, .stCheckbox, 
-        button, .step-up, .step-down, div[data-testid="stInputNumber-StepUp"], div[data-testid="stInputNumber-StepDown"] { 
+        /* Ocultar toda la interfaz interactiva e inestable de Streamlit */
+        div[data-testid="stSidebar"], div[data-testid="stHeader"], footer, header, .print-section, iframe, 
+        .stCheckbox, button, .stWidget, div[role="radiogroup"], div[data-testid="stHorizontalBlock"] { 
             display: none !important; 
         }
         
         @page {
-            margin: 0.8cm !important;
+            margin: 1.2cm !important;
+            size: auto;
         }
         
-        /* Limpieza absoluta de contenedores e interfaces grises/celestes en el DOM impreso */
-        div[data-testid="stBlock"], div[data-testid="stVerticalBlock"], div[data-testid="stHorizontalBlock"], .stWidget,
-        div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput div, .stNumberInput div, div[data-testid="stMarkdownContainer"] div {
-            background-color: transparent !important;
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            gap: 0 !important;
-        }
-
-        /* Achicar al máximo el espacio entre el título del campo y su valor completado */
-        .element-container {
-            margin-top: 1px !important;
-            margin-bottom: 1px !important;
-            padding-top: 0px !important;
-            padding-bottom: 1px !important;
-            line-height: 1.1 !important;
+        /* Activar el bloque alternativo de texto plano indestructible */
+        .print-only-block { 
+            display: block !important; 
+            width: 100% !important;
         }
         
+        /* Forzar tipografía reducida un punto (9.5pt) para compactación y fluidez entre hojas */
         body, p, div, span, td, th {
-            font-size: 11.5pt !important; 
+            font-size: 9.5pt !important; 
             color: #111111 !important;
             font-family: 'Segoe UI', Arial, sans-serif !important;
-        }
-        
-        /* Forzar visualización de campos limpios sin recuadro redondeado azul/celeste */
-        input, select, textarea {
-            border: none !important;
-            background: transparent !important;
             background-color: transparent !important;
-            box-shadow: none !important;
-            font-size: 11.5pt !important;
-            font-weight: bold !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            display: block !important;
+            background: transparent !important;
         }
         
-        div[data-baseweb="select"] button, div[role="button"] {
-            display: none !important;
-        }
-        
-        /* Cabecera idéntica a pantalla con Logo original y sin solapamientos */
+        /* Corrección de superposición: Estructura fija para la cabecera impresa */
         .header-container { 
             display: flex !important; 
             justify-content: space-between !important;
             align-items: center !important;
             border-bottom: 2px solid #0B2240 !important; 
-            margin-bottom: 15px !important; 
-            padding-bottom: 6px !important;
+            margin-bottom: 25px !important; 
+            padding-bottom: 8px !important;
+            page-break-inside: avoid !important;
         }
         .logo-right { 
             display: block !important; 
-            max-width: 260px !important; /* Tamaño nítido y original */
+            width: 260px !important; 
+            max-width: 260px !important;
             height: auto !important;
         }
-        .quote-title-left { display: block !important; font-size: 20pt !important; }
+        .quote-title-left { 
+            display: block !important; 
+            font-size: 18pt !important; 
+        }
         
-        /* Evita que los términos pisen el título superior de sección */
         .section-header { 
             display: flex !important; 
-            border-left: 5px solid #FF6B00 !important; 
-            font-size: 12pt !important; 
-            margin-top: 20px !important; 
+            border-left: 4px solid #FF6B00 !important; 
+            font-size: 11pt !important; 
+            margin-top: 15px !important; 
             margin-bottom: 8px !important; 
-            padding-top: 5px !important;
+            padding-left: 8px !important;
+            page-break-after: avoid !important;
         }
-        .clause-box { display: block !important; background-color: #FFFDF5 !important; border: 1px solid #FFEBAA !important; padding: 10px !important; margin-top: 5px !important; }
-        .total-row-container { display: flex !important; background-color: #0B2240 !important; padding: 8px 15px !important; margin-top: 15px !important; }
-        .total-price-text { color: #FF6B00 !important; font-size: 18pt !important; }
+        
+        /* Contenedores de datos en impresión (Limpios sin recuadros celestes de inputs) */
+        .data-grid-print {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px 30px !important;
+            margin-bottom: 15px !important;
+            width: 100% !important;
+        }
+        .data-item-print {
+            border-bottom: 1px solid #E2E8F0 !important;
+            padding-bottom: 3px !important;
+            line-height: 1.2 !important;
+        }
+        
+        /* Tablas de conceptos con saltos de página fluidos si pasa a la hoja 2 */
+        .stDataFrame, table { 
+            display: table !important; 
+            width: 100% !important;
+            margin-bottom: 15px !important;
+            page-break-inside: auto !important;
+        }
+        tr { page-break-inside: avoid !important; page-break-after: auto !important; }
+        td, th { padding: 4px 6px !important; font-size: 9.5pt !important; border: 1px solid #CBD5E1 !important; }
+
+        .clause-box { 
+            display: block !important; 
+            background-color: #FFFDF5 !important; 
+            border: 1px solid #FFEBAA !important; 
+            padding: 10px !important; 
+            margin-top: 10px !important;
+            page-break-inside: avoid !important;
+        }
+        .total-row-container { 
+            display: flex !important; 
+            background-color: #0B2240 !important; 
+            padding: 6px 15px !important; 
+            margin-top: 12px !important;
+            page-break-inside: avoid !important;
+        }
+        .total-price-text { color: #FF6B00 !important; font-size: 16pt !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -141,7 +160,7 @@ st.markdown("""
 st.sidebar.markdown("### 👥 Perfil Comercial")
 destinatario = st.sidebar.selectbox("Tipo de Destinatario", ["Cliente", "Agente"])
 
-# Cabecera
+# Cabecera Unificada
 st.markdown(f"""
 <div class="header-container">
     <div class="quote-title-left">COTIZACIÓN DE EMBARQUE</div>
@@ -153,6 +172,7 @@ st.markdown(f"""
 
 all_incoterms = ["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP", "FAS", "FOB", "CFR", "CIF"]
 
+# ---------------- CONTROLES INTERACTIVOS (SÓLO PANTALLA) ----------------
 col1, col2 = st.columns([1, 1])
 
 with col1:
@@ -220,20 +240,13 @@ with col2:
         label_valor = "Valor FOB de la Mercadería (USD)" if operacion == "Exportacion" else "Valor CIF de la Mercadería (USD)"
         valor_mercaderia = st.number_input(label_valor, min_value=0.0, value=25000.0, step=1000.0)
         
-        honorarios_calculados = valor_mercaderia * 0.007
-        honorarios_finales = max(275.0, honorarios_calculados)
-        gastos_despacho_fijos = 150.0
-        digitalizacion_fija = 65.0
+        honorarios_finales = max(275.0, valor_mercaderia * 0.007)
+        broker_cost = honorarios_finales + 150.0 + 65.0
         
-        broker_total_item = honorarios_finales + gastos_despacho_fijos + digitalizacion_fija
-        broker_cost = broker_total_item
-        
-        tipo_honorario_lbl = "0.7% Valor FOB (Min 275)" if operacion == "Exportacion" else "0.7% Valor CIF (Min 275)"
         st.caption(f"📋 **Despacho:** Hon: USD {honorarios_finales:,.2f} | Gastos: USD 150.00 | Dig: USD 65.00")
         
         apply_taxes = st.checkbox("¿Aplica liquidación de Duties & Taxes?", value=False)
         if apply_taxes:
-            st.markdown("**Duties & Taxes (Campos de entrada libres):**")
             col_t1, col_t2 = st.columns(2)
             with col_t1:
                 input_duty = st.number_input("Duty / Arancel (%)", min_value=0.0, value=16.0, step=0.5)
@@ -246,10 +259,34 @@ with col2:
             tax_vat = valor_mercaderia * (input_vat / 100)
             tax_add_vat = valor_mercaderia * (input_add_vat / 100)
             tax_other = valor_mercaderia * (input_other / 100)
-            
-            st.caption(f"💵 **Duties & Taxes Informativo:** USD {(tax_duty + tax_vat + tax_add_vat + tax_other):,.2f} (No se incluirá en el total)")
 
-# ----------------- BASE DE DATOS TARIFARIO -----------------
+# ---------------- BYPASS INDESTRUCTIBLE PARA IMPRESIÓN ----------------
+# Renderiza bloques de texto plano puro controlados por CSS que reemplazan las cajas de Streamlit en el PDF
+st.markdown(f"""
+<div class="print-only-block">
+    <div class="section-header">1. Información General</div>
+    <div class="data-grid-print">
+        <div class="data-item-print"><b>Número de Referencia:</b> {ref_num}</div>
+        <div class="data-item-print"><b>Fecha de Emisión:</b> {fecha_cotizacion.strftime('%d/%m/%Y')}</div>
+        <div class="data-item-print"><b>Tipo de Operación:</b> {operacion}</div>
+        <div class="data-item-print"><b>Condición de Venta / Incoterm:</b> {incoterm}</div>
+        <div class="data-item-print"><b>Vía de Transporte:</b> {modalidad}</div>
+        <div class="data-item-print"><b>Modalidad de Carga:</b> {tipo_eq}</div>
+        <div class="data-item-print"><b>Modelo del Contenedor (THC):</b> {container_size}</div>
+        <div class="data-item-print"><b>Cantidad de Unidades:</b> {cantidad}</div>
+        <div class="data-item-print"><b>Medio Asignado:</b> {nombre_transporte}</div>
+        <div class="data-item-print"><b>Cronograma Proyectado:</b> ETD: {etd_date.strftime('%d/%m/%Y')} | ETA: {eta_date.strftime('%d/%m/%Y')}</div>
+    </div>
+    <div class="section-header">2. Tarifas Principales</div>
+    <div class="data-grid-print">
+        <div class="data-item-print"><b>Flete Internacional Base:</b> USD {flete_intl:,.2f}</div>
+        <div class="data-item-print"><b>Gastos Terminal / Depósito:</b> USD {gastos_term:,.2f}</div>
+        <div class="data-item-print"><b>Logística Interna / Delivery:</b> USD {delivery_cost:,.2f} (Desde {del_from} hasta {del_to})</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ----------------- PROCESAMIENTO DE CONCEPTOS BI -----------------
 tarifario_AGT = [
     ["Agente", "Maritimo", "Importacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 350.00, False],
     ["Agente", "Maritimo", "Importacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, False],
@@ -421,7 +458,17 @@ if rows_to_render:
 else:
     st.info("No se registran cargos fijos adicionales parametrizados para este perfil.")
 
-# El total final contempla fijos, flete, terminal y distribución; Duties & Taxes NO se suman al total
+if apply_broker and 'apply_taxes' in locals() and apply_taxes:
+    st.markdown('<div class="section-header">5. Duties & Taxes</div>', unsafe_allow_html=True)
+    df_impuestos = pd.DataFrame([
+        {"Impuesto / Concepto Fiscal": "Duty / Derechos de Importación", "Tasa Gravamen": f"{input_duty}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_duty:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "VAT / IVA General", "Tasa Gravamen": f"{input_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_vat:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "Additional VAT / IVA Adicional", "Tasa Gravamen": f"{input_add_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_add_vat:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "Other taxes / Tasa Estadística y Otros", "Tasa Gravamen": f"{input_other}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_other:,.2f}"}
+    ])
+    st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
+
+# Totales Consolidados finales (Duties & Taxes NO se suman al total)
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
@@ -432,6 +479,7 @@ st.markdown(f'''
 </div>
 ''', unsafe_allow_html=True)
 
+# Modificación de jerarquía: Los términos se renderizan de forma segura sin peligro de pisar el total
 st.markdown('<div class="section-header">5. Términos Legales y Validez del Servicio</div>', unsafe_allow_html=True)
 
 clausula_final = f"VALIDEZ TEMPORAL: Esta propuesta es válida hasta el {fecha_validez.strftime('%d/%m/%Y')} (5 días desde su emisión).<br>"
@@ -445,13 +493,14 @@ if apply_delivery:
 if apply_broker:
     clausula_final += f"DESPACHO DE ADUANA: Coordinado bajo modalidad {operacion} por cuenta de AGT Broker (Posición Arancelaria: {pa_code}).<br>"
 
-if apply_broker and apply_taxes:
+if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     clausula_final += "IMPUESTOS: Duties and taxes no incluidos en la cotización comercial.<br>"
 
-clausula_final += "REGULACIONES: Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
+clausula_final += "REGULACIONES: Las cotizaciones están sugeras a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
 st.markdown(f'<div class="clause-box">{clausula_final}</div>', unsafe_allow_html=True)
 
+# Botón de impresión
 components.html(
     """
     <style>
