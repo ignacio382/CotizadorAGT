@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit st
 import pandas as pd
 import numpy as np
 import streamlit.components.v1 as components
@@ -173,7 +173,7 @@ with col1:
     ref_num = st.text_input("Número de Referencia", value="AGT-2026-4821")
     fecha_cotizacion = st.date_input("Fecha de Emisión", value=datetime.today())
     operacion = st.selectbox("Tipo de Operación", ["Importacion", "Exportacion"])
-    incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=9) # Index de FOB
+    incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=9)
     modalidad = st.selectbox("Vía de Transporte", ["Maritimo", "Aereo", "Terrestre"])
     
     if modalidad == "Aereo": eq_options = ["Aereo"]
@@ -233,7 +233,6 @@ with col2:
     st.markdown('<div class="section-header">2. Tarifas</div>', unsafe_allow_html=True)
     flete_intl = st.number_input("Flete Internacional Base (USD)", min_value=0.0, value=1850.0)
     
-    # Cambio solicitado de nombre de la etiqueta descriptiva en pantalla
     st.text(f"Gastos Terminal / Deposito Aprox.: {rango_texto_terminal}")
     gastos_term = st.number_input("Gastos Terminal / Depósito de Cálculo (USD)", min_value=0.0, value=default_terminal_calc)
     
@@ -383,52 +382,9 @@ tarifario_AGT = [
     ["Cliente", "Maritimo", "Exportacion", "LCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, True],
     ["Cliente", "Maritimo", "Exportacion", "LCL", "Gate", "x BL", 45.00, 45.00, 45.00, True],
     ["Cliente", "Maritimo", "Exportacion", "LCL", "VGM", "x BL", 25.00, 25.00, 25.00, True],
-
-    ["Agente", "Aereo", "Importacion", "Aereo", "Res. 3244/11", "x guía/parcial", 20.00, 20.00, 20.00, False],
-    ["Agente", "Aereo", "Importacion", "Aereo", "Desconsolidación", "x bulto min usd 20", 0.50, 0.50, 0.50, False],
-    ["Agente", "Aereo", "Importacion", "Aereo", "IATA Collection fee", "3% s/AWB min usd 50", 0.03, 0.03, 0.03, False],
-    ["Agente", "Aereo", "Importacion", "Aereo", "Handling aerolínea", "x guía", 210.00, 210.00, 210.00, False],
-    ["Agente", "Aereo", "Importacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, False],
-    ["Agente", "Aereo", "Importacion", "Aereo", "Carga DGR (en caso de aplicar)", "x guía (MIN)", 180.00, 180.00, 180.00, False],
-
-    ["Cliente", "Aereo", "Importacion", "Aereo", "Res. 3244/11", "x guía/parcial", 20.00, 20.00, 20.00, False],
-    ["Cliente", "Aereo", "Importacion", "Aereo", "Desconsolidación", "x bulto min usd 20", 0.50, 0.50, 0.50, True],
-    ["Cliente", "Aereo", "Importacion", "Aereo", "IATA Collection fee", "3% s/AWB min usd 50", 0.03, 0.03, 0.03, False],
-    ["Cliente", "Aereo", "Importacion", "Aereo", "Handling aerolínea", "x guía", 210.00, 210.00, 210.00, True],
-    ["Cliente", "Aereo", "Importacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, True],
-    ["Cliente", "Aereo", "Importacion", "Aereo", "Carga DGR (en caso de aplicar)", "x guía (MIN)", 180.00, 180.00, 180.00, True],
-
-    ["Agente", "Aereo", "Exportacion", "Aereo", "TCA*", "x guía min usd 20", 0.02, 0.02, 0.02, False],
-    ["Agente", "Aereo", "Exportacion", "Aereo", "Emisión de AWB", "x guía", 35.00, 35.00, 35.00, False],
-    ["Agente", "Aereo", "Exportacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, False],
-    ["Agente", "Aereo", "Exportacion", "Aereo", "Carga DGR (si aplica)", "x guía (MIN)", 180.00, 180.00, 180.00, False],
-
-    ["Cliente", "Aereo", "Exportacion", "Aereo", "Res. 3244/11", "x guía/parcial", 20.00, 20.00, 20.00, False],
-    ["Cliente", "Aereo", "Exportacion", "Aereo", "TCA*", "x guía min usd 20", 0.02, 0.02, 0.02, True],
-    ["Cliente", "Aereo", "Exportacion", "Aereo", "Emisión de AWB", "x guía", 35.00, 35.00, 35.00, True],
-    ["Cliente", "Aereo", "Exportacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, True],
-    ["Cliente", "Aereo", "Exportacion", "Aereo", "Carga DGR (si aplica)", "x guía (MIN)", 180.00, 180.00, 180.00, True],
-
-    ["Agente", "Terrestre", "Importacion", "FTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
-    ["Agente", "Terrestre", "Importacion", "FTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, False],
-    ["Agente", "Terrestre", "Importacion", "LTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
-    ["Agente", "Terrestre", "Importacion", "LTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, False],
-    ["Agente", "Terrestre", "Exportacion", "FTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
-    ["Agente", "Terrestre", "Exportacion", "FTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, False],
-    ["Agente", "Terrestre", "Exportacion", "LTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
-    ["Agente", "Terrestre", "Exportacion", "LTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, False],
-
-    ["Cliente", "Terrestre", "Importacion", "FTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, True],
-    ["Cliente", "Terrestre", "Importacion", "FTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, True],
-    ["Cliente", "Terrestre", "Importacion", "LTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, True],
-    ["Cliente", "Terrestre", "Importacion", "LTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, True],
-    ["Cliente", "Terrestre", "Exportacion", "FTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, True],
-    ["Cliente", "Terrestre", "Exportacion", "FTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, True],
-    ["Cliente", "Terrestre", "Exportacion", "LTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, True],
-    ["Cliente", "Terrestre", "Exportacion", "LTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, True],
 ]
 
-# --- LÓGICA DE CONDICIONAL EXCLUSIVO FOB SOLICITADO ---
+# --- NUEVA LÓGICA CONDICIONAL DE FLUJO EXPO/IMPO PARA FOB MARÍTIMO ---
 is_fob_maritimo = (incoterm == "FOB" and modalidad == "Maritimo")
 
 fijos_total = 0.0
@@ -436,27 +392,41 @@ fijos_iva = 0.0
 rows_to_render = []
 
 if is_fob_maritimo:
-    # REGLA FOB MARÍTIMO: Se bloquean todos los fijos anteriores y solo se inyecta el Profit Share con sus leyendas
-    if tipo_eq == "FCL":
-        subtotal_fob = 50.0 * cantidad
+    # Si es FOB Marítimo se bloquean los fijos tradicionales y se evalúa el flujo de operación
+    if operacion == "Exportacion":
+        if tipo_eq == "FCL":
+            subtotal_fob = 50.0 * cantidad
+            iva_fob = subtotal_fob * 0.21 if destinatario == "Cliente" else 0.0
+            fijos_total += subtotal_fob
+            fijos_iva += iva_fob
+            
+            rows_to_render.append({
+                "Concepto": "Profit Share AGT (FCL) *Tarifas netas, nuestro Profit Share es USD 50 / *Flete Collect / *Sujeto a disponibilidad y espacio.",
+                "Unidad": "x Contenedor", "Moneda": "USD", "Tarifa Base": "USD 50.00",
+                "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": f"USD {iva_fob:,.2f}" if destinatario == "Cliente" else "Exento"
+            })
+        elif tipo_eq == "LCL":
+            subtotal_fob = 25.0 * cantidad
+            iva_fob = subtotal_fob * 0.21 if destinatario == "Cliente" else 0.0
+            fijos_total += subtotal_fob
+            fijos_iva += iva_fob
+            
+            rows_to_render.append({
+                "Concepto": "Profit Share AGT (LCL) *Tarifas netas, nuestro Profit Share es USD 25 / *Collect / *Sujeto a disponibilidad y espacio",
+                "Unidad": "x Envío", "Moneda": "USD", "Tarifa Base": "USD 25.00",
+                "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": f"USD {iva_fob:,.2f}" if destinatario == "Cliente" else "Exento"
+            })
+    else:
+        # REGLA IMPO: Lleva el profit liso sin las leyendas operativas extensas de origen
+        monto_profit_impo = 50.0 if tipo_eq == "FCL" else 25.0
+        subtotal_fob = monto_profit_impo * cantidad
         iva_fob = subtotal_fob * 0.21 if destinatario == "Cliente" else 0.0
         fijos_total += subtotal_fob
         fijos_iva += iva_fob
         
         rows_to_render.append({
-            "Concepto": "Profit Share AGT (FCL) *Tarifas netas / *Flete Collect / *Sujeto a disponibilidad",
-            "Unidad": "x Contenedor", "Moneda": "USD", "Tarifa Base": "USD 50.00",
-            "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": f"USD {iva_fob:,.2f}" if destinatario == "Cliente" else "Exento"
-        })
-    elif tipo_eq == "LCL":
-        subtotal_fob = 25.0 * cantidad
-        iva_fob = subtotal_fob * 0.21 if destinatario == "Cliente" else 0.0
-        fijos_total += subtotal_fob
-        fijos_iva += iva_fob
-        
-        rows_to_render.append({
-            "Concepto": "Profit Share AGT (LCL) *Tarifas netas, nuestro Profit... / *Collect / *Sujeto a disponibilidad y espacio",
-            "Unidad": "x Envío", "Moneda": "USD", "Tarifa Base": "USD 25.00",
+            "Concepto": f"Profit Share AGT ({tipo_eq})",
+            "Unidad": "x Unidad" if tipo_eq == "FCL" else "x Envío", "Moneda": "USD", "Tarifa Base": f"USD {monto_profit_impo:,.2f}",
             "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": f"USD {iva_fob:,.2f}" if destinatario == "Cliente" else "Exento"
         })
 else:
@@ -502,7 +472,7 @@ else:
                 "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
             })
 
-# Inyección del concepto manual opcional si aplica
+# Inyección del concepto manual opcional
 manual_cost_total = 0.0
 if manual_concepto.strip() != "" and manual_precio > 0:
     manual_subtotal = manual_precio * cantidad
@@ -537,7 +507,6 @@ if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     ])
     st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
 
-# Totales Consolidados finales
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + manual_cost_total
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
@@ -559,7 +528,6 @@ if modalidad == "Maritimo":
 if apply_delivery and delivery_cost > 0:
     clausula_final += f"ENTREGA TERRESTRE: Delivery programado desde {del_from} hasta {del_to} por un importe de USD {delivery_cost:,.2f}.<br>"
 
-# Inyección de leyenda indicando que los rangos informados son valores aproximados
 if " / " in rango_texto_terminal:
     clausula_final += f"GASTOS DE DEPOSITARIO: Los costos de Terminal / Depósito detallados como {rango_texto_terminal} representan valores aproximados sujetos a la tarifa del depósito fiscal definitivo al momento del arribo.<br>"
 
