@@ -50,44 +50,53 @@ st.markdown("""
     .total-label-text { font-size: 16px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
     .total-price-text { font-size: 24px; font-weight: bold; color: #FF6B00; }
 
-    /* REGLAS DE IMPRESIÓN DIRECTA ULTRA COMPACTA Y LIMPIA */
+    /* REGLAS DE IMPRESIÓN DIRECTA ULTRA COMPACTA Y SIN RECUADROS */
     @media print {
-        /* Ocultar barra lateral, cabeceras web, botones y elementos interactivos */
+        /* Ocultar elementos de la interfaz de Streamlit */
         [data-testid="stSidebar"], [data-testid="stHeader"], footer, header, .print-section, iframe, .stCheckbox, 
         button, .step-up, .step-down, div[data-testid="stInputNumber-StepUp"], div[data-testid="stInputNumber-StepDown"] { 
             display: none !important; 
         }
         
-        /* Reducir márgenes de página generales para ganar espacio vertical */
+        /* Ajustar márgenes de página */
         @page {
-            margin: 0.8cm !important;
+            margin: 0.6cm !important;
         }
         
-        /* Ajustar espaciados de Streamlit al mínimo para compactar en una hoja */
-        div[data-testid="stVerticalBlock"] {
-            gap: 0.2rem !important;
+        /* Eliminar por completo los bloques contenedores y recuadros celestes/grises de Streamlit */
+        div[data-testid="stBlock"], div[data-testid="stVerticalBlock"], div[data-testid="stHorizontalBlock"], .stWidget {
+            background-color: transparent !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            gap: 0 !important;
         }
+
+        /* Compactar la distancia entre cada fila de datos */
         .element-container {
-            margin-bottom: 2px !important;
+            margin-bottom: 1px !important;
+            padding-bottom: 1px !important;
         }
         
-        /* Forzar tipografía nítida y un poco más compacta */
+        /* Tipografía nítida y tamaño equilibrado */
         body, p, div, span, td, th {
-            font-size: 11pt !important; 
+            font-size: 11.5pt !important; 
             color: #111111 !important;
             font-family: 'Segoe UI', Arial, sans-serif !important;
         }
         
-        /* SACAR RECUADROS GRISES/CELESTES: Forzar inputs limpios y planos sin fondo */
-        input, select, textarea, div[data-baseweb="input"], div[data-baseweb="select"] {
+        /* Forzar inputs limpios y planos sin recuadros celestes de fondo ni bordes */
+        input, select, textarea, div[data-baseweb="input"], div[data-baseweb="select"], .stTextInput div, .stNumberInput div {
             border: none !important;
             background: transparent !important;
             background-color: transparent !important;
             box-shadow: none !important;
-            font-size: 11pt !important;
+            font-size: 11.5pt !important;
             font-weight: bold !important;
             padding: 0 !important;
-            margin-top: -4px !important;
+            margin: 0 !important;
         }
         
         /* Ocultar flechas selectores web */
@@ -95,10 +104,21 @@ st.markdown("""
             display: none !important;
         }
         
-        /* Mantener la estructura limpia */
-        .header-container { display: flex !important; border-bottom: 2px solid #0B2240 !important; margin-bottom: 10px !important; }
-        .logo-right { display: block !important; max-width: 150px !important; }
-        .quote-title-left { display: block !important; font-size: 16pt !important; }
+        /* Mantener la cabecera idéntica a la pantalla con el logo en su tamaño original */
+        .header-container { 
+            display: flex !important; 
+            justify-content: space-between !important;
+            align-items: center !important;
+            border-bottom: 2px solid #0B2240 !important; 
+            margin-bottom: 10px !important; 
+            padding-bottom: 6px !important;
+        }
+        .logo-right { 
+            display: block !important; 
+            max-width: 180px !important; /* Mantiene la escala de la pantalla */
+            height: auto !important;
+        }
+        .quote-title-left { display: block !important; font-size: 18pt !important; }
         .section-header { display: flex !important; border-left: 5px solid #FF6B00 !important; font-size: 12pt !important; margin-top: 8px !important; margin-bottom: 4px !important; }
         .clause-box { display: block !important; background-color: #FFFDF5 !important; border: 1px solid #FFEBAA !important; padding: 8px !important; }
         .total-row-container { display: flex !important; background-color: #0B2240 !important; padding: 8px 15px !important; margin-top: 10px !important; }
@@ -111,7 +131,7 @@ st.markdown("""
 st.sidebar.markdown("### 👥 Perfil Comercial")
 destinatario = st.sidebar.selectbox("Tipo de Destinatario", ["Cliente", "Agente"])
 
-# Cabecera
+# Cabecera idéntica para pantalla y PDF
 st.markdown(f"""
 <div class="header-container">
     <div class="quote-title-left">COTIZACIÓN DE EMBARQUE</div>
@@ -178,7 +198,6 @@ with col2:
     else:
         delivery_cost, del_from, del_to = 0.0, "N/A", "N/A"
 
-    # MÓDULO INTERACTIVO DE CUSTOMS BROKER & TAXES
     st.markdown('<div class="section-header">3. Servicios de Aduana</div>', unsafe_allow_html=True)
     apply_broker = st.checkbox("¿Aplica Customs Broker?", value=False)
     
@@ -414,7 +433,6 @@ if apply_broker and 'apply_taxes' in locals() and apply_taxes:
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + taxes_cost
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
-# TOTAL REDISEÑADO LIMPIO
 st.markdown(f'''
 <div class="total-row-container">
     <div class="total-label-text">TOTAL</div>
@@ -422,7 +440,6 @@ st.markdown(f'''
 </div>
 ''', unsafe_allow_html=True)
 
-# Cláusulas legales operativas limpias de asteriscos y negritas repetitivas
 st.markdown('<div class="section-header">5. Términos Legales y Validez del Servicio</div>', unsafe_allow_html=True)
 
 clausula_final = f"VALIDEZ TEMPORAL: Esta propuesta es válida hasta el {fecha_validez.strftime('%d/%m/%Y')} (5 días desde su emisión).<br>"
@@ -440,7 +457,6 @@ clausula_final += "REGULACIONES: Las cotizaciones están sujetas a variaciones d
 
 st.markdown(f'<div class="clause-box">{clausula_final}</div>', unsafe_allow_html=True)
 
-# Sección de botón de impresión directo
 components.html(
     """
     <style>
