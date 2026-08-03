@@ -1,4 +1,4 @@
-import streamlit st
+import streamlit as st
 import pandas as pd
 import numpy as np
 import streamlit.components.v1 as components
@@ -392,7 +392,6 @@ fijos_iva = 0.0
 rows_to_render = []
 
 if is_fob_maritimo:
-    # Si es FOB Marítimo se bloquean los fijos tradicionales y se evalúa el flujo de operación
     if operacion == "Exportacion":
         if tipo_eq == "FCL":
             subtotal_fob = 50.0 * cantidad
@@ -417,7 +416,6 @@ if is_fob_maritimo:
                 "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": f"USD {iva_fob:,.2f}" if destinatario == "Cliente" else "Exento"
             })
     else:
-        # REGLA IMPO: Lleva el profit liso sin las leyendas operativas extensas de origen
         monto_profit_impo = 50.0 if tipo_eq == "FCL" else 25.0
         subtotal_fob = monto_profit_impo * cantidad
         iva_fob = subtotal_fob * 0.21 if destinatario == "Cliente" else 0.0
@@ -430,7 +428,6 @@ if is_fob_maritimo:
             "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": f"USD {iva_fob:,.2f}" if destinatario == "Cliente" else "Exento"
         })
 else:
-    # PROCESAMIENTO GENERAL DEL TARIFARIO TRADICIONAL SI NO ES FOB
     df_base = pd.DataFrame(tarifario_AGT, columns=["Destinatario", "Modalidad", "Operacion", "TipoEquipamiento", "Concepto", "UnidadBase", "Precio20", "Precio40", "PrecioRF", "AplicaIVA"])
     filtered_df = df_base[
         (df_base['Destinatario'] == destinatario) & 
@@ -472,7 +469,6 @@ else:
                 "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
             })
 
-# Inyección del concepto manual opcional
 manual_cost_total = 0.0
 if manual_concepto.strip() != "" and manual_precio > 0:
     manual_subtotal = manual_precio * cantidad
@@ -507,6 +503,7 @@ if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     ])
     st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
 
+totales Consolidados finales
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + manual_cost_total
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
