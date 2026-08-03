@@ -281,7 +281,7 @@ with col2:
         
         apply_taxes = st.checkbox("¿Aplica liquidación de Duties & Taxes?", value=False)
         if apply_taxes:
-            st.markdown("**Duties & Taxes (Campos de entrada libres):**")
+            st.markdown("**Duties & Taxes (Campos de entrada libres informativos):**")
             col_t1, col_t2 = st.columns(2)
             with col_t1:
                 input_duty = st.number_input("Duty / Arancel (%)", min_value=0.0, value=16.0, step=0.5)
@@ -335,7 +335,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ----------------- BASE DE DATOS TARIFARIO -----------------
-# SE MANTIENEN LOS CARGOS AÉREOS ORIGINALES COMO FUERON SOLICITADOS
 tarifario_AGT = [
     ["Agente", "Maritimo", "Importacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 350.00, False],
     ["Agente", "Maritimo", "Importacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, False],
@@ -566,15 +565,7 @@ if rows_to_render:
 else:
     st.info("No se registran cargos fijos adicionales parametrizados para este perfil.")
 
-if apply_broker and 'apply_taxes' in locals() and apply_taxes:
-    st.markdown('<div class="section-header">5. Duties & Taxes</div>', unsafe_allow_html=True)
-    df_impuestos = pd.DataFrame([
-        {"Impuesto / Concepto Fiscal": "Duty / Derechos de Importación", "Tasa Gravamen": f"{input_duty}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_duty:,.2f}"},
-        {"Impuesto / Concepto Fiscal": "VAT / IVA General", "Tasa Gravamen": f"{input_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_vat:,.2f}"},
-        {"Impuesto / Concepto Fiscal": "Additional VAT / IVA Adicional", "Tasa Gravamen": f"{input_add_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_add_vat:,.2f}"},
-        {"Impuesto / Concepto Fiscal": "Other taxes / Tasa Estadística y Otros", "Tasa Gravamen": f"{input_other}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_other:,.2f}"}
-    ])
-    st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
+# REMOVIDO: LA TABLA VISUAL DE DUTIES & TAXES YA NO SE MUESTRA ABAJO NI EN EL PDF
 
 # # # Comentario: Totales Consolidados finales
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + manual_cost_total
