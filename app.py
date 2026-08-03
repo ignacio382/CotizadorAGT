@@ -384,7 +384,7 @@ tarifario_AGT = [
     ["Cliente", "Maritimo", "Exportacion", "LCL", "VGM", "x BL", 25.00, 25.00, 25.00, True],
 ]
 
-# --- NUEVA LÓGICA CONDICIONAL DE FLUJO EXPO/IMPO PARA FOB MARÍTIMO ---
+# --- LÓGICA CONDICIONAL DE FLUJO EXPO/IMPO PARA FOB MARÍTIMO ---
 is_fob_maritimo = (incoterm == "FOB" and modalidad == "Maritimo")
 
 fijos_total = 0.0
@@ -503,7 +503,7 @@ if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     ])
     st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
 
-totales Consolidados finales
+# # # Comentario: Totales Consolidados finales corregido para producción
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + manual_cost_total
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
