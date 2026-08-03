@@ -153,14 +153,16 @@ with col2:
     else:
         delivery_cost, del_from, del_to = 0.0, "N/A", "N/A"
 
-    # MÓDULO INTERACTIVO DE CUSTOMS BROKER & TAXES
+    # MÓDULO INTERACTIVO DE CUSTOMS BROKER & TAXES RECONFIGURADO
     st.markdown('<div class="section-header">3. Servicios de Aduana</div>', unsafe_allow_html=True)
     apply_broker = st.checkbox("¿Aplica Customs Broker?", value=False)
     
     broker_cost = 0.0
     taxes_cost = 0.0
+    pa_code = "N/A"
     
     if apply_broker:
+        pa_code = st.text_input("HS Code / PA", value="8471.30.12")
         label_valor = "Valor FOB de la Mercadería (USD)" if operacion == "Exportacion" else "Valor CIF de la Mercadería (USD)"
         valor_mercaderia = st.number_input(label_valor, min_value=0.0, value=25000.0, step=1000.0)
         
@@ -177,8 +179,7 @@ with col2:
         
         apply_taxes = st.checkbox("¿Aplica liquidación de Duties & Taxes?", value=False)
         if apply_taxes:
-            st.markdown("**Tasas Impositivas (Editables según HTS / PA):**")
-            # Cajas numéricas para que el usuario pueda escribir/modificar los porcentajes libremente
+            st.markdown("**Duties & Taxes (Editables según PA / HTS):**")
             col_t1, col_t2 = st.columns(2)
             with col_t1:
                 input_duty = st.number_input("Duty / Arancel (%)", min_value=0.0, value=16.0, step=0.5)
@@ -363,19 +364,12 @@ if not filtered_df.empty:
             "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
         })
 
-# Inyección dinámica de filas de Despacho de Aduana si está activo
+# Inyección dinámica de las líneas de despacho aduanero puro
 if apply_broker:
     tipo_h_lbl = "0.7% FOB (Min 275)" if operacion == "Exportacion" else "0.7% CIF (Min 275)"
     rows_to_render.append({"Concepto": "Hon. Despacho", "Unidad": tipo_h_lbl, "Moneda": "USD", "Tarifa Base": "Variable", "Subtotal": f"USD {max(275.0, valor_mercaderia*0.007):,.2f}", "IVA (21%)": "Exento"})
     rows_to_render.append({"Concepto": "Gastos de despacho", "Unidad": "x Operación", "Moneda": "USD", "Tarifa Base": "USD 150.00", "Subtotal": "USD 150.00", "IVA (21%)": "Exento"})
     rows_to_render.append({"Concepto": "Digitalización", "Unidad": "x Operación", "Moneda": "USD", "Tarifa Base": "USD 65.00", "Subtotal": "USD 65.00", "IVA (21%)": "Exento"})
-
-# Inyección dinámica de Duties & Taxes
-if apply_broker and 'apply_taxes' in locals() and apply_taxes:
-    rows_to_render.append({"Concepto": "Duty (Derechos de Importación)", "Unidad": f"{input_duty}% base", "Moneda": "USD", "Tarifa Base": f"{input_duty}%", "Subtotal": f"USD {tax_duty:,.2f}", "IVA (21%)": "Exento"})
-    rows_to_render.append({"Concepto": "VAT (IVA)", "Unidad": f"{input_vat}% base", "Moneda": "USD", "Tarifa Base": f"{input_vat}%", "Subtotal": f"USD {tax_vat:,.2f}", "IVA (21%)": "Exento"})
-    rows_to_render.append({"Concepto": "Additional VAT (IVA Adicional)", "Unidad": f"{input_add_vat}% base", "Moneda": "USD", "Tarifa Base": f"{input_add_vat}%", "Subtotal": f"USD {tax_add_vat:,.2f}", "IVA (21%)": "Exento"})
-    rows_to_render.append({"Concepto": "Other taxes (Otros Impuestos)", "Unidad": f"{input_other}% base", "Moneda": "USD", "Tarifa Base": f"{input_other}%", "Subtotal": f"USD {tax_other:,.2f}", "IVA (21%)": "Exento"})
 
 st.markdown('<div class="section-header">4. Conceptos Fijos Locales</div>', unsafe_allow_html=True)
 if rows_to_render:
@@ -383,7 +377,18 @@ if rows_to_render:
 else:
     st.info("No se registran cargos fijos adicionales parametrizados para este perfil.")
 
-# Totales Consolidados finales incluyendo Aduana e Impuestos
+# Modificación solicitada: si se calculan Duties & Taxes, se exponen debajo pero no se inyectan a la tabla de conceptos fijos locales
+if apply_broker and 'apply_taxes' in locals() and apply_taxes:
+    st.markdown('<div class="section-header">5. Liquidación de Impuestos Coadyuvantes (Duties & Taxes)</div>', unsafe_allow_html=True)
+    df_impuestos = pd.DataFrame([
+        {"Impuesto / Concepto Fiscal": "Duty / Derechos de Importación", "Tasa Gravamen": f"{input_duty}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_duty:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "VAT / IVA General", "Tasa Gravamen": f"{input_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_vat:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "Additional VAT / IVA Adicional", "Tasa Gravamen": f"{input_add_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_add_vat:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "Other taxes / Tasa Estadística y Otros", "Tasa Gravamen": f"{input_other}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_other:,.2f}"}
+    ])
+    st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
+
+# Totales Consolidados finales incluyendo Aduana e Impuestos (Duties & Taxes no se suman si no se requiere, pero sí al gran total final)
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + taxes_cost
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
@@ -395,22 +400,23 @@ st.markdown(f'''
 </div>
 ''', unsafe_allow_html=True)
 
-# Cláusulas legales operativas
-st.markdown('<div class="section-header">5. Términos Legales y Validez del Servicio</div>', unsafe_allow_html=True)
-clausula_final = f"• **VALIDEZ TEMPORAL:** Esta propuesta es válida hasta el **{fecha_validez.strftime('%d/%m/%Y')}** (5 días desde su emisión).\n"
-clausula_final += f"• **TRANSPORTE ASIGNADO:** Medio coordinado vía *{nombre_transporte}*.\n"
-clausula_final += f"• **CRONOGRAMA ESTIMADO:** ETD: **{etd_date.strftime('%d/%m/%Y')}** | ETA: **{eta_date.strftime('%d/%m/%Y')}**.\n"
+# Cláusulas legales operativas limpias de asteriscos y negritas repetitivas
+st.markdown('<div class="section-header">6. Términos Legales y Validez del Servicio</div>', unsafe_allow_html=True)
+
+clausula_final = f"VALIDEZ TEMPORAL: Esta propuesta es válida hasta el {fecha_validez.strftime('%d/%m/%Y')} (5 días desde su emisión).<br>"
+clausula_final += f"TRANSPORTE ASIGNADO: Medio coordinado vía {nombre_transporte}.<br>"
+clausula_final += f"CRONOGRAMA ESTIMADO: ETD: {etd_date.strftime('%d/%m/%Y')} | ETA: {eta_date.strftime('%d/%m/%Y')}.<br>"
 
 if modalidad == "Maritimo":
-    clausula_final += f"• **TIEMPOS DE DESTINO:** Transit Time estimado en **{tt_days} días** con un período de **{free_days} días libres** en destino.\n"
+    clausula_final += f"TIEMPOS DE DESTINO: Transit Time estimado en {tt_days} días con un período de {free_days} días libres en destino.<br>"
 if apply_delivery:
-    clausula_final += f"• **ENTREGA TERRESTRE:** Delivery programado desde *{del_from}* hasta *{del_to}* por un importe de USD {delivery_cost:,.2f}.\n"
+    clausula_final += f"ENTREGA TERRESTRE: Delivery programado desde {del_from} hasta {del_to} por un importe de USD {delivery_cost:,.2f}.<br>"
 if apply_broker:
-    clausula_final += f"• **DESPACHO DE ADUANA:** Coordinado bajo modalidad {operacion} por cuenta de AGT Broker.\n"
+    clausula_final += f"DESPACHO DE ADUANA: Coordinado bajo modalidad {operacion} por cuenta de AGT Broker (Posición Arancelaria: {pa_code}).<br>"
 
-clausula_final += "• **REGULACIONES:** Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
+clausula_final += "REGULACIONES: Las cotizaciones están sugeras a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
-st.markdown('<div class="clause-box">' + clausula_final.replace('\n', '<br>') + '</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="clause-box">{clausula_final}</div>', unsafe_allow_html=True)
 
 # Sección de botón de impresión directo
 components.html(
