@@ -241,7 +241,7 @@ with col2:
         flete_intl = flete_por_kilo * peso_kg
         st.caption(f"✈️ **Cómputo Flete Aéreo Base:** {peso_kg} Kg x USD {flete_por_kilo:,.2f} = USD {flete_intl:,.2f}")
         
-        # NUEVOS RILES SOLICITADOS: PARÁMETROS EDITABLES DE DUE CARRIER
+        # PARAMETROS EDITABLES DE DUE CARRIER
         st.markdown("**Parámetros Due Carrier (Editables):**")
         col_air1, col_air2 = st.columns(2)
         with col_air1:
@@ -335,6 +335,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ----------------- BASE DE DATOS TARIFARIO -----------------
+# SE MANTIENEN LOS CARGOS AÉREOS ORIGINALES COMO FUERON SOLICITADOS
 tarifario_AGT = [
     ["Agente", "Maritimo", "Importacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 350.00, False],
     ["Agente", "Maritimo", "Importacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, False],
@@ -373,6 +374,79 @@ tarifario_AGT = [
     ["Cliente", "Maritimo", "Importacion", "LCL", "Certificación de flete", "x BL", 45.00, 45.00, 45.00, True],
     ["Cliente", "Maritimo", "Importacion", "LCL", "Handling marítima", "x BL", 35.00, 35.00, 35.00, True],
     ["Cliente", "Maritimo", "Importacion", "LCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, True],
+
+    ["Agente", "Maritimo", "Exportacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 370.00, False],
+    ["Agente", "Maritimo", "Exportacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, False],
+    ["Agente", "Maritimo", "Exportacion", "FCL", "Logistics fee", "x contenedor", 75.00, 75.00, 75.00, False],
+    ["Agente", "Maritimo", "Exportacion", "FCL", "Handling marítima/Gate in", "x contenedor", 65.00, 65.00, 65.00, False],
+    ["Agente", "Maritimo", "Exportacion", "FCL", "Emisión de BL", "x BL", 75.00, 75.00, 75.00, False],
+    ["Agente", "Maritimo", "Exportacion", "FCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, False],
+    ["Agente", "Maritimo", "Exportacion", "FCL", "Ingreso SIM", "x BL", 65.00, 65.00, 65.00, False],
+    ["Agente", "Maritimo", "Exportacion", "FCL", "Precinto", "x contenedor", 25.00, 25.00, 25.00, False],
+    
+    ["Cliente", "Maritimo", "Exportacion", "FCL", "THC", "x contenedor", 295.00, 335.00, 370.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "FCL", "Toll", "x contenedor", 170.00, 170.00, 170.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "FCL", "Logistics fee", "x contenedor", 75.00, 75.00, 75.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "FCL", "Handling marítima/Gate in", "x contenedor", 65.00, 65.00, 65.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "FCL", "Emisión de BL", "x BL", 75.00, 75.00, 75.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "FCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "FCL", "Ingreso SIM", "x BL", 65.00, 65.00, 65.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "FCL", "Precinto", "x contenedor", 25.00, 25.00, 25.00, True],
+
+    ["Agente", "Maritimo", "Exportacion", "LCL", "Consolidación", "tn/m3 min usd 70", 35.00, 35.00, 35.00, False],
+    ["Agente", "Maritimo", "Exportacion", "LCL", "Emisión BL", "x BL", 65.00, 65.00, 65.00, False],
+    ["Agente", "Maritimo", "Exportacion", "LCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, False],
+    ["Agente", "Maritimo", "Exportacion", "LCL", "Gate", "x BL", 45.00, 45.00, 45.00, False],
+    ["Agente", "Maritimo", "Exportacion", "LCL", "VGM", "x BL", 25.00, 25.00, 25.00, False],
+
+    ["Cliente", "Maritimo", "Exportacion", "LCL", "Consolidación", "tn/m3 min usd 70", 35.00, 35.00, 35.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "LCL", "Emisión BL", "x BL", 65.00, 65.00, 65.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "LCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "LCL", "Gate", "x BL", 45.00, 45.00, 45.00, True],
+    ["Cliente", "Maritimo", "Exportacion", "LCL", "VGM", "x BL", 25.00, 25.00, 25.00, True],
+
+    ["Agente", "Aereo", "Importacion", "Aereo", "Res. 3244/11", "x guía/parcial", 20.00, 20.00, 20.00, False],
+    ["Agente", "Aereo", "Importacion", "Aereo", "Desconsolidación", "x bulto min usd 20", 0.50, 0.50, 0.50, False],
+    ["Agente", "Aereo", "Importacion", "Aereo", "IATA Collection fee", "3% s/AWB min usd 50", 0.03, 0.03, 0.03, False],
+    ["Agente", "Aereo", "Importacion", "Aereo", "Handling aerolínea", "x guía", 210.00, 210.00, 210.00, False],
+    ["Agente", "Aereo", "Importacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, False],
+    ["Agente", "Aereo", "Importacion", "Aereo", "Carga DGR (en caso de aplicar)", "x guía (MIN)", 180.00, 180.00, 180.00, False],
+
+    ["Cliente", "Aereo", "Importacion", "Aereo", "Res. 3244/11", "x guía/parcial", 20.00, 20.00, 20.00, False],
+    ["Cliente", "Aereo", "Importacion", "Aereo", "Desconsolidación", "x bulto min usd 20", 0.50, 0.50, 0.50, True],
+    ["Cliente", "Aereo", "Importacion", "Aereo", "IATA Collection fee", "3% s/AWB min usd 50", 0.03, 0.03, 0.03, False],
+    ["Cliente", "Aereo", "Importacion", "Aereo", "Handling aerolínea", "x guía", 210.00, 210.00, 210.00, True],
+    ["Cliente", "Aereo", "Importacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, True],
+    ["Cliente", "Aereo", "Importacion", "Aereo", "Carga DGR (en caso de aplicar)", "x guía (MIN)", 180.00, 180.00, 180.00, True],
+
+    ["Agente", "Aereo", "Exportacion", "Aereo", "TCA*", "x guía min usd 20", 0.02, 0.02, 0.02, False],
+    ["Agente", "Aereo", "Exportacion", "Aereo", "Emisión de AWB", "x guía", 35.00, 35.00, 35.00, False],
+    ["Agente", "Aereo", "Exportacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, False],
+    ["Agente", "Aereo", "Exportacion", "Aereo", "Carga DGR (si aplica)", "x guía (MIN)", 180.00, 180.00, 180.00, False],
+
+    ["Cliente", "Aereo", "Exportacion", "Aereo", "Res. 3244/11", "x guía/parcial", 20.00, 20.00, 20.00, False],
+    ["Cliente", "Aereo", "Exportacion", "Aereo", "TCA*", "x guía min usd 20", 0.02, 0.02, 0.02, True],
+    ["Cliente", "Aereo", "Exportacion", "Aereo", "Emisión de AWB", "x guía", 35.00, 35.00, 35.00, True],
+    ["Cliente", "Aereo", "Exportacion", "Aereo", "Manejo de documentación", "x guía", 95.00, 95.00, 95.00, True],
+    ["Cliente", "Aereo", "Exportacion", "Aereo", "Carga DGR (si aplica)", "x guía (MIN)", 180.00, 180.00, 180.00, True],
+
+    ["Agente", "Terrestre", "Importacion", "FTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
+    ["Agente", "Terrestre", "Importacion", "FTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, False],
+    ["Agente", "Terrestre", "Importacion", "LTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
+    ["Agente", "Terrestre", "Importacion", "LTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, False],
+    ["Agente", "Terrestre", "Exportacion", "FTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
+    ["Agente", "Terrestre", "Exportacion", "FTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, False],
+    ["Agente", "Terrestre", "Exportacion", "LTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, False],
+    ["Agente", "Terrestre", "Exportacion", "LTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, False],
+
+    ["Cliente", "Terrestre", "Importacion", "FTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, True],
+    ["Cliente", "Terrestre", "Importacion", "FTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, True],
+    ["Cliente", "Terrestre", "Importacion", "LTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, True],
+    ["Cliente", "Terrestre", "Importacion", "LTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, True],
+    ["Cliente", "Terrestre", "Exportacion", "FTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, True],
+    ["Cliente", "Terrestre", "Exportacion", "FTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, True],
+    ["Cliente", "Terrestre", "Exportacion", "LTL", "Manejo de documentación", "x CRT", 125.00, 125.00, 125.00, True],
+    ["Cliente", "Terrestre", "Exportacion", "LTL", "Emisión de CRT", "x CRT", 25.00, 25.00, 25.00, True],
 ]
 
 # --- LÓGICA CONDICIONAL DE FLUJO EXPO/IMPO PARA FOB MARÍTIMO CON IVA EXENTO ---
@@ -407,7 +481,49 @@ if is_fob_maritimo:
             "Unidad": "x Unidad" if tipo_eq == "FCL" else "x Envío", "Moneda": "USD", "Tarifa Base": f"USD {monto_profit_impo:,.2f}", "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": "Exento"
         })
 else:
-    # SI ES VÍA AÉREA, COMPUTA ADEMÁS LOS CARGOS DUE CARRIER SOLICITADOS BASADOS EN TU IMAGEN EDITABLES
+    # PROCESAMIENTO GENERAL DEL TARIFARIO TRADICIONAL
+    df_base = pd.DataFrame(tarifario_AGT, columns=["Destinatario", "Modalidad", "Operacion", "TipoEquipamiento", "Concepto", "UnidadBase", "Precio20", "Precio40", "PrecioRF", "AplicaIVA"])
+    filtered_df = df_base[
+        (df_base['Destinatario'] == destinatario) & 
+        (df_base['Modalidad'] == modalidad) & 
+        (df_base['Operacion'] == operacion) & 
+        (df_base['TipoEquipamiento'] == tipo_eq)
+    ].copy()
+
+    if not filtered_df.empty:
+        for index, row in filtered_df.iterrows():
+            concepto = row['Concepto']
+            unidad = row['UnidadBase']
+            precio_base = row['Precio20']
+            
+            if modalidad == "Maritimo" and tipo_eq == "FCL":
+                if container_size == "40' HQ / Standard": precio_base = row['Precio40']
+                elif container_size == "Reefer (RF)": precio_base = row['PrecioRF']
+                
+            subtotal_item = precio_base * cantidad
+            
+            if "tn/m3 min usd 70" in unidad:
+                subtotal_item = max(70.0 * cantidad, precio_base * ton_m3 * cantidad)
+            elif "tn min usd 4" in unidad:
+                subtotal_item = max(4.0 * cantidad, precio_base * ton_m3 * cantidad)
+            elif "x bulto min usd 20" in unidad:
+                subtotal_item = max(20.0, precio_base * cantidad)
+            elif "3% s/AWB min usd 50" in unidad:
+                subtotal_item = max(50.0, flete_intl * 0.03)
+            elif "x guía min usd 20" in unidad:
+                subtotal_item = max(20.0 * cantidad, (0.02 * peso_kg + 10) * cantidad)
+                
+            iva_item = subtotal_item * 0.21 if row['AplicaIVA'] else 0.0
+            fijos_total += subtotal_item
+            fijos_iva += iva_item
+            
+            rows_to_render.append({
+                "Concepto": concepto, "Unidad": unidad, "Moneda": "USD",
+                "Tarifa Base": f"USD {precio_base:,.2f}", "Subtotal": f"USD {subtotal_item:,.2f}",
+                "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
+            })
+            
+    # SI ES VÍA AÉREA, COMPUTA ADEMÁS LOS CARGOS DUE CARRIER AL FINAL DE LOS FIJOS COMUNES
     if modalidad == "Aereo":
         # 1. Concepto EZEC Fijo basado en tu entrada editable
         fijos_total += input_ezec_base
@@ -424,48 +540,6 @@ else:
             "Concepto": "Due Carrier - SCC Fuel/Security Surcharge", "Unidad": "x Kg (Min USD 10)", "Moneda": "USD",
             "Tarifa Base": f"USD {input_scc_base:,.2f}", "Subtotal": f"USD {scc_subtotal:,.2f}", "IVA (21%)": "Exento"
         })
-    else:
-        # PROCESAMIENTO GENERAL DEL TARIFARIO TRADICIONAL MARÍTIMO / TERRESTRE
-        df_base = pd.DataFrame(tarifario_AGT, columns=["Destinatario", "Modalidad", "Operacion", "TipoEquipamiento", "Concepto", "UnidadBase", "Precio20", "Precio40", "PrecioRF", "AplicaIVA"])
-        filtered_df = df_base[
-            (df_base['Destinatario'] == destinatario) & 
-            (df_base['Modalidad'] == modalidad) & 
-            (df_base['Operacion'] == operacion) & 
-            (df_base['TipoEquipamiento'] == tipo_eq)
-        ].copy()
-
-        if not filtered_df.empty:
-            for index, row in filtered_df.iterrows():
-                concepto = row['Concepto']
-                unidad = row['UnidadBase']
-                precio_base = row['Precio20']
-                
-                if modalidad == "Maritimo" and tipo_eq == "FCL":
-                    if container_size == "40' HQ / Standard": precio_base = row['Precio40']
-                    elif container_size == "Reefer (RF)": precio_base = row['PrecioRF']
-                    
-                subtotal_item = precio_base * cantidad
-                
-                if "tn/m3 min usd 70" in unidad:
-                    subtotal_item = max(70.0 * cantidad, precio_base * ton_m3 * cantidad)
-                elif "tn min usd 4" in unidad:
-                    subtotal_item = max(4.0 * cantidad, precio_base * ton_m3 * cantidad)
-                elif "x bulto min usd 20" in unidad:
-                    subtotal_item = max(20.0, precio_base * cantidad)
-                elif "3% s/AWB min usd 50" in unidad:
-                    subtotal_item = max(50.0, flete_intl * 0.03)
-                elif "x guía min usd 20" in unidad:
-                    subtotal_item = max(20.0 * cantidad, (0.02 * peso_kg + 10) * cantidad)
-                    
-                iva_item = subtotal_item * 0.21 if row['AplicaIVA'] else 0.0
-                fijos_total += subtotal_item
-                fijos_iva += iva_item
-                
-                rows_to_render.append({
-                    "Concepto": concepto, "Unidad": unidad, "Moneda": "USD",
-                    "Tarifa Base": f"USD {precio_base:,.2f}", "Subtotal": f"USD {subtotal_item:,.2f}",
-                    "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
-                })
 
 # Inyección del concepto manual opcional libre
 manual_cost_total = 0.0
@@ -531,6 +605,10 @@ if apply_broker:
     clausula_final += f"DESPACHO DE ADUANA: Coordinado bajo modalidad {operacion} por cuenta de AGT Broker (Posición Arancelaria: {pa_code}).<br>"
 if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     clausula_final += "IMPUESTOS: Duties and taxes no incluidos en la cotización comercial.<br>"
+
+# LEYENDAS EXTRA EXCLUSIVAS PARA AÉREO SEGÚN IMAGEN
+if modalidad == "Aereo":
+    clausula_final += "ALMACENAJE AÉREO: Storage (3 free days), days after at cost. +30% en caso de que requiera cámara de frío.<br>"
 
 clausula_final += "REGULACIONES: Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
