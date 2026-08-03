@@ -173,8 +173,8 @@ with col1:
     ref_num = st.text_input("Número de Referencia", value="AGT-2026-4821")
     fecha_cotizacion = st.date_input("Fecha de Emisión", value=datetime.today())
     operacion = st.selectbox("Tipo de Operación", ["Importacion", "Exportacion"])
-    incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=9)
-    modalidad = st.selectbox("Vía de Transporte", ["Maritimo", "Aereo", "Terrestre"])
+    incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=1) # Por defecto FCA
+    modalidad = st.selectbox("Vía de Transporte", ["Maritimo", "Aereo", "Terrestre"], index=1) # Por defecto Aereo
     
     if modalidad == "Aereo": eq_options = ["Aereo"]
     elif modalidad == "Terrestre": eq_options = ["FTL", "LTL"]
@@ -192,7 +192,8 @@ with col1:
     if tipo_eq == "LCL":
         ton_m3 = st.number_input("Volumen / Toneladas del envío (w/m)", min_value=0.1, value=1.0, step=0.1)
     if modalidad == "Aereo":
-        peso_kg = st.number_input("Peso Bruto Tarifado (Kg)", min_value=1.0, value=100.0, step=5.0)
+        # Incrementado a 100 como base del ejemplo (+100kg)
+        peso_kg = st.number_input("Peso Bruto Tarifado (Kg)", min_value=1.0, value=150.0, step=5.0)
 
     if modalidad == "Maritimo":
         nombre_transporte = st.text_input("Línea Marítima / Buque", value="Hapag-Lloyd - SAN CLEMENTE V.260W")
@@ -231,7 +232,15 @@ else:
 
 with col2:
     st.markdown('<div class="section-header">2. Tarifas</div>', unsafe_allow_html=True)
-    flete_intl = st.number_input("Flete Internacional Base (USD)", min_value=0.0, value=1850.0)
+    
+    # NUEVA LÓGICA DE ENTRADA DINÁMICA SI ES LOGÍSTICA AÉREA
+    if modalidad == "Aereo":
+        flete_por_kilo = st.number_input("Tarifa de Flete por Kilo (USD)", min_value=0.0, value=3.25, step=0.1)
+        # El costo total del flete base computado es el valor kilo x el peso del envío
+        flete_intl = flete_por_kilo * peso_kg
+        st.caption(f"✈️ **Cómputo Flete Aéreo Base:** {peso_kg} Kg x USD {flete_por_kilo:,.2f} = USD {flete_intl:,.2f}")
+    else:
+        flete_intl = st.number_input("Flete Internacional Base (USD)", min_value=0.0, value=1850.0)
     
     st.text(f"Gastos Terminal / Deposito Aprox.: {rango_texto_terminal}")
     gastos_term = st.number_input("Gastos Terminal / Depósito de Cálculo (USD)", min_value=0.0, value=default_terminal_calc)
@@ -288,7 +297,10 @@ with col2:
 # -------------- RENDIMIENTO DEL PDF DE IMPRESIÓN DIRECTA SIN CEROS --------------
 print_tarifas_html = ""
 if flete_intl > 0:
-    print_tarifas_html += f'<div class="data-item-print"><b>Flete Internacional Base:</b> USD {flete_intl:,.2f}</div>'
+    if modalidad == "Aereo":
+        print_tarifas_html += f'<div class="data-item-print"><b>Flete Internacional Base:</b> USD {flete_intl:,.2f} ({peso_kg} Kg x USD {flete_por_kilo:,.2f} / Kg)</div>'
+    else:
+        print_tarifas_html += f'<div class="data-item-print"><b>Flete Internacional Base:</b> USD {flete_intl:,.2f}</div>'
 if gastos_term > 0:
     print_tarifas_html += f'<div class="data-item-print"><b>Gastos Terminal / Depósito:</b> {rango_texto_terminal if " / " in rango_texto_terminal else f"USD {gastos_term:,.2f}"}</div>'
 if delivery_cost > 0:
@@ -370,18 +382,6 @@ tarifario_AGT = [
     ["Cliente", "Maritimo", "Exportacion", "FCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, True],
     ["Cliente", "Maritimo", "Exportacion", "FCL", "Ingreso SIM", "x BL", 65.00, 65.00, 65.00, True],
     ["Cliente", "Maritimo", "Exportacion", "FCL", "Precinto", "x contenedor", 25.00, 25.00, 25.00, True],
-
-    ["Agente", "Maritimo", "Exportacion", "LCL", "Consolidación", "tn/m3 min usd 70", 35.00, 35.00, 35.00, False],
-    ["Agente", "Maritimo", "Exportacion", "LCL", "Emisión BL", "x BL", 65.00, 65.00, 65.00, False],
-    ["Agente", "Maritimo", "Exportacion", "LCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, False],
-    ["Agente", "Maritimo", "Exportacion", "LCL", "Gate", "x BL", 45.00, 45.00, 45.00, False],
-    ["Agente", "Maritimo", "Exportacion", "LCL", "VGM", "x BL", 25.00, 25.00, 25.00, False],
-
-    ["Cliente", "Maritimo", "Exportacion", "LCL", "Consolidación", "tn/m3 min usd 70", 35.00, 35.00, 35.00, True],
-    ["Cliente", "Maritimo", "Exportacion", "LCL", "Emisión BL", "x BL", 65.00, 65.00, 65.00, True],
-    ["Cliente", "Maritimo", "Exportacion", "LCL", "Manejo de documentación", "x BL", 95.00, 95.00, 95.00, True],
-    ["Cliente", "Maritimo", "Exportacion", "LCL", "Gate", "x BL", 45.00, 45.00, 45.00, True],
-    ["Cliente", "Maritimo", "Exportacion", "LCL", "VGM", "x BL", 25.00, 25.00, 25.00, True],
 ]
 
 # --- LÓGICA CONDICIONAL DE FLUJO EXPO/IMPO PARA FOB MARÍTIMO CON IVA EXENTO ---
@@ -396,74 +396,87 @@ if is_fob_maritimo:
         if tipo_eq == "FCL":
             subtotal_fob = 50.0 * cantidad
             fijos_total += subtotal_fob
-            
             rows_to_render.append({
                 "Concepto": "Profit Share AGT (FCL) *Tarifas netas, nuestro Profit Share es USD 50 / *Flete Collect / *Sujeto a disponibilidad y espacio.",
-                "Unidad": "x Contenedor", "Moneda": "USD", "Tarifa Base": "USD 50.00",
-                "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": "Exento"
+                "Unidad": "x Contenedor", "Moneda": "USD", "Tarifa Base": "USD 50.00", "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": "Exento"
             })
         elif tipo_eq == "LCL":
             subtotal_fob = 25.0 * cantidad
             fijos_total += subtotal_fob
-            
             rows_to_render.append({
                 "Concepto": "Profit Share AGT (LCL) *Tarifas netas, nuestro Profit Share es USD 25 / *Collect / *Sujeto a disponibilidad y espacio",
-                "Unidad": "x Envío", "Moneda": "USD", "Tarifa Base": "USD 25.00",
-                "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": "Exento"
+                "Unidad": "x Envío", "Moneda": "USD", "Tarifa Base": "USD 25.00", "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": "Exento"
             })
     else:
         monto_profit_impo = 50.0 if tipo_eq == "FCL" else 25.0
         subtotal_fob = monto_profit_impo * cantidad
         fijos_total += subtotal_fob
-        
         rows_to_render.append({
             "Concepto": f"Profit Share AGT ({tipo_eq})",
-            "Unidad": "x Unidad" if tipo_eq == "FCL" else "x Envío", "Moneda": "USD", "Tarifa Base": f"USD {monto_profit_impo:,.2f}",
-            "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": "Exento"
+            "Unidad": "x Unidad" if tipo_eq == "FCL" else "x Envío", "Moneda": "USD", "Tarifa Base": f"USD {monto_profit_impo:,.2f}", "Subtotal": f"USD {subtotal_fob:,.2f}", "IVA (21%)": "Exento"
         })
 else:
-    df_base = pd.DataFrame(tarifario_AGT, columns=["Destinatario", "Modalidad", "Operacion", "TipoEquipamiento", "Concepto", "UnidadBase", "Precio20", "Precio40", "PrecioRF", "AplicaIVA"])
-    filtered_df = df_base[
-        (df_base['Destinatario'] == destinatario) & 
-        (df_base['Modalidad'] == modalidad) & 
-        (df_base['Operacion'] == operacion) & 
-        (df_base['TipoEquipamiento'] == tipo_eq)
-    ].copy()
+    # SI ES VÍA AÉREA, COMPUTA ADEMÁS LOS CARGOS DUE CARRIER SOLICITADOS BASADOS EN TU IMAGEN
+    if modalidad == "Aereo":
+        # 1. Concepto EZEC Fijo
+        fijos_total += 21.0
+        rows_to_render.append({
+            "Concepto": "Due Carrier - EZEC Tasa Seguridad", "Unidad": "x Operación", "Moneda": "USD",
+            "Tarifa Base": "USD 21.00", "Subtotal": "USD 21.00", "IVA (21%)": "Exento"
+        })
+        
+        # 2. Concepto SCC Variable por Peso (Min USD 10)
+        scc_calculado = 0.06 * peso_kg
+        scc_subtotal = max(10.0, scc_calculado)
+        fijos_total += scc_subtotal
+        rows_to_render.append({
+            "Concepto": "Due Carrier - SCC Fuel/Security Surcharge", "Unidad": "x Kg (Min USD 10)", "Moneda": "USD",
+            "Tarifa Base": "USD 0.06", "Subtotal": f"USD {scc_subtotal:,.2f}", "IVA (21%)": "Exento"
+        })
+    else:
+        # PROCESAMIENTO GENERAL DEL TARIFARIO TRADICIONAL MARÍTIMO / TERRESTRE
+        df_base = pd.DataFrame(tarifario_AGT, columns=["Destinatario", "Modalidad", "Operacion", "TipoEquipamiento", "Concepto", "UnidadBase", "Precio20", "Precio40", "PrecioRF", "AplicaIVA"])
+        filtered_df = df_base[
+            (df_base['Destinatario'] == destinatario) & 
+            (df_base['Modalidad'] == modalidad) & 
+            (df_base['Operacion'] == operacion) & 
+            (df_base['TipoEquipamiento'] == tipo_eq)
+        ].copy()
 
-    if not filtered_df.empty:
-        for index, row in filtered_df.iterrows():
-            concepto = row['Concepto']
-            unidad = row['UnidadBase']
-            precio_base = row['Precio20']
-            
-            if modalidad == "Maritimo" and tipo_eq == "FCL":
-                if container_size == "40' HQ / Standard": precio_base = row['Precio40']
-                elif container_size == "Reefer (RF)": precio_base = row['PrecioRF']
+        if not filtered_df.empty:
+            for index, row in filtered_df.iterrows():
+                concepto = row['Concepto']
+                unidad = row['UnidadBase']
+                precio_base = row['Precio20']
                 
-            subtotal_item = precio_base * cantidad
-            
-            if "tn/m3 min usd 70" in unidad:
-                subtotal_item = max(70.0 * cantidad, precio_base * ton_m3 * cantidad)
-            elif "tn min usd 4" in unidad:
-                subtotal_item = max(4.0 * cantidad, precio_base * ton_m3 * cantidad)
-            elif "x bulto min usd 20" in unidad:
-                subtotal_item = max(20.0, precio_base * cantidad)
-            elif "3% s/AWB min usd 50" in unidad:
-                subtotal_item = max(50.0, flete_intl * 0.03)
-            elif "x guía min usd 20" in unidad:
-                subtotal_item = max(20.0 * cantidad, (0.02 * peso_kg + 10) * cantidad)
+                if modalidad == "Maritimo" and tipo_eq == "FCL":
+                    if container_size == "40' HQ / Standard": precio_base = row['Precio40']
+                    elif container_size == "Reefer (RF)": precio_base = row['PrecioRF']
+                    
+                subtotal_item = precio_base * cantidad
                 
-            iva_item = subtotal_item * 0.21 if row['AplicaIVA'] else 0.0
-            fijos_total += subtotal_item
-            fijos_iva += iva_item
-            
-            rows_to_render.append({
-                "Concepto": concepto, "Unidad": unidad, "Moneda": "USD",
-                "Tarifa Base": f"USD {precio_base:,.2f}", "Subtotal": f"USD {subtotal_item:,.2f}",
-                "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
-            })
+                if "tn/m3 min usd 70" in unidad:
+                    subtotal_item = max(70.0 * cantidad, precio_base * ton_m3 * cantidad)
+                elif "tn min usd 4" in unidad:
+                    subtotal_item = max(4.0 * cantidad, precio_base * ton_m3 * cantidad)
+                elif "x bulto min usd 20" in unidad:
+                    subtotal_item = max(20.0, precio_base * cantidad)
+                elif "3% s/AWB min usd 50" in unidad:
+                    subtotal_item = max(50.0, flete_intl * 0.03)
+                elif "x guía min usd 20" in unidad:
+                    subtotal_item = max(20.0 * cantidad, (0.02 * peso_kg + 10) * cantidad)
+                    
+                iva_item = subtotal_item * 0.21 if row['AplicaIVA'] else 0.0
+                fijos_total += subtotal_item
+                fijos_iva += iva_item
+                
+                rows_to_render.append({
+                    "Concepto": concepto, "Unidad": unidad, "Moneda": "USD",
+                    "Tarifa Base": f"USD {precio_base:,.2f}", "Subtotal": f"USD {subtotal_item:,.2f}",
+                    "IVA (21%)": f"USD {iva_item:,.2f}" if row['AplicaIVA'] else "Exento"
+                })
 
-# Inyección del concepto manual opcional con IVA según perfil si no es exento por defecto
+# Inyección del concepto manual opcional libre
 manual_cost_total = 0.0
 if manual_concepto.strip() != "" and manual_precio > 0:
     manual_subtotal = manual_precio * cantidad
@@ -498,7 +511,7 @@ if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     ])
     st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
 
-# # # Comentario: Totales Consolidados finales corregido para producción
+# # # Comentario: Totales Consolidados finales
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + manual_cost_total
 fecha_validez = fecha_cotizacion + timedelta(days=5)
 
@@ -528,7 +541,7 @@ if apply_broker:
 if apply_broker and 'apply_taxes' in locals() and apply_taxes:
     clausula_final += "IMPUESTOS: Duties and taxes no incluidos en la cotización comercial.<br>"
 
-clausula_final += "REGULACIONES: Las cotizaciones están sugeras a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
+clausula_final += "REGULACIONES: Las cotizaciones están sujetas a variaciones de recargos BAF/CAF por parte de los carriers y espacio disponible al momento de la reserva."
 
 st.markdown(f'<div class="clause-box">{clausula_final}</div>', unsafe_allow_html=True)
 
