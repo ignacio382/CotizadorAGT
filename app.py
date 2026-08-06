@@ -173,8 +173,8 @@ with col1:
     ref_num = st.text_input("Número de Referencia", value="AGT-2026-4821")
     fecha_cotizacion = st.date_input("Fecha de Emisión", value=datetime.today())
     operacion = st.selectbox("Tipo de Operación", ["Importacion", "Exportacion"])
-    incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=1) 
-    modalidad = st.selectbox("Vía de Transporte", ["Maritimo", "Aereo", "Terrestre"], index=1) 
+    incoterm = st.selectbox("Condición de Venta / Incoterm", options=all_incoterms, index=9) 
+    modalidad = st.selectbox("Vía de Transporte", ["Maritimo", "Aereo", "Terrestre"], index=0) 
     
     if modalidad == "Aereo": eq_options = ["Aereo"]
     elif modalidad == "Terrestre": eq_options = ["FTL", "LTL"]
@@ -229,7 +229,6 @@ else:
     rango_texto_terminal = "USD 500.00 / USD 1,000.00"
     default_terminal_calc = 1000.0
 
-# Inicialización de bases para aéreo
 input_ezec_base = 21.0
 input_scc_base = 0.06
 
@@ -241,7 +240,6 @@ with col2:
         flete_intl = flete_por_kilo * peso_kg
         st.caption(f"✈️ **Cómputo Flete Aéreo Base:** {peso_kg} Kg x USD {flete_por_kilo:,.2f} = USD {flete_intl:,.2f}")
         
-        # PARAMETROS EDITABLES DE DUE CARRIER
         st.markdown("**Parámetros Due Carrier (Editables):**")
         col_air1, col_air2 = st.columns(2)
         with col_air1:
@@ -251,10 +249,13 @@ with col2:
     else:
         flete_intl = st.number_input("Flete Internacional Base (USD)", min_value=0.0, value=1850.0)
     
-    st.text(f"Gastos Terminal / Deposito Aprox.: {rango_texto_terminal}")
-    gastos_term = st.number_input("Gastos Terminal / Depósito de Cálculo (USD)", min_value=0.0, value=default_terminal_calc)
-    
-    apply_delivery = st.checkbox("¿Aplica Flete Interno / Delivery?", value=True)
+    if incoterm != "FOB":
+        st.text(f"Gastos Terminal / Deposito Aprox.: {rango_texto_terminal}")
+        gastos_term = st.number_input("Gastos Terminal / Depósito de Cálculo (USD)", min_value=0.0, value=default_terminal_calc)
+    else:
+        gastos_term = 0.0
+
+    apply_delivery = st.checkbox("¿Aplica Flete Interno / Delivery?", value=False if incoterm == "FOB" else True)
     
     if apply_delivery:
         del_from = st.text_input("Origen del Flete Local", value="Puerto de Buenos Aires" if modalidad == "Maritimo" else "Aeropuerto de Ezeiza")
@@ -310,7 +311,7 @@ if flete_intl > 0:
         print_tarifas_html += f'<div class="data-item-print"><b>Flete Internacional Base:</b> USD {flete_intl:,.2f} ({peso_kg} Kg x USD {flete_por_kilo:,.2f} / Kg)</div>'
     else:
         print_tarifas_html += f'<div class="data-item-print"><b>Flete Internacional Base:</b> USD {flete_intl:,.2f}</div>'
-if gastos_term > 0:
+if gastos_term > 0 and incoterm != "FOB":
     print_tarifas_html += f'<div class="data-item-print"><b>Gastos Terminal / Depósito:</b> {rango_texto_terminal if " / " in rango_texto_terminal else f"USD {gastos_term:,.2f}"}</div>'
 if delivery_cost > 0:
     print_tarifas_html += f'<div class="data-item-print"><b>Logística Interna / Delivery:</b> USD {delivery_cost:,.2f} (Desde {del_from} hasta {del_to})</div>'
@@ -524,14 +525,12 @@ else:
             
     # SI ES VÍA AÉREA, COMPUTA ADEMÁS LOS CARGOS DUE CARRIER AL FINAL DE LOS FIJOS COMUNES
     if modalidad == "Aereo":
-        # 1. Concepto EZEC Fijo basado en tu entrada editable
         fijos_total += input_ezec_base
         rows_to_render.append({
             "Concepto": "Due Carrier - EZEC Tasa Seguridad", "Unidad": "x Operación", "Moneda": "USD",
             "Tarifa Base": f"USD {input_ezec_base:,.2f}", "Subtotal": f"USD {input_ezec_base:,.2f}", "IVA (21%)": "Exento"
         })
         
-        # 2. Concepto SCC Variable por Peso basado en tu entrada editable (Min USD 10)
         scc_calculado = input_scc_base * peso_kg
         scc_subtotal = max(10.0, scc_calculado)
         fijos_total += scc_subtotal
@@ -565,7 +564,15 @@ if rows_to_render:
 else:
     st.info("No se registran cargos fijos adicionales parametrizados para este perfil.")
 
-# REMOVIDO: LA TABLA VISUAL DE DUTIES & TAXES YA NO SE MUESTRA ABAJO NI EN EL PDF
+if apply_broker and 'apply_taxes' in locals() and apply_taxes:
+    st.markdown('<div class="section-header">5. Duties & Taxes</div>', unsafe_allow_html=True)
+    df_impuestos = pd.DataFrame([
+        {"Impuesto / Concepto Fiscal": "Duty / Derechos de Importación", "Tasa Gravamen": f"{input_duty}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_duty:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "VAT / IVA General", "Tasa Gravamen": f"{input_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_vat:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "Additional VAT / IVA Adicional", "Tasa Gravamen": f"{input_add_vat}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_add_vat:,.2f}"},
+        {"Impuesto / Concepto Fiscal": "Other taxes / Tasa Estadística y Otros", "Tasa Gravamen": f"{input_other}%", "Base de Cálculo": f"USD {valor_mercaderia:,.2f}", "Total Estimado": f"USD {tax_other:,.2f}"}
+    ])
+    st.dataframe(df_impuestos, use_container_width=True, hide_index=True)
 
 # # # Comentario: Totales Consolidados finales
 gran_total = fijos_total + fijos_iva + flete_intl + gastos_term + delivery_cost + broker_cost + manual_cost_total
@@ -589,8 +596,11 @@ if modalidad == "Maritimo":
 if apply_delivery and delivery_cost > 0:
     clausula_final += f"ENTREGA TERRESTRE: Delivery programado desde {del_from} hasta {del_to} por un importe de USD {delivery_cost:,.2f}.<br>"
 
-if " / " in rango_texto_terminal:
+if " / " in rango_texto_terminal and incoterm != "FOB":
     clausula_final += f"GASTOS DE DEPOSITARIO: Los costos de Terminal / Depósito detallados como {rango_texto_terminal} representan valores aproximados sujetos a la tarifa del depósito fiscal definitivo al momento del arribo.<br>"
+
+if incoterm == "FOB":
+    clausula_final += "CONDICIONES FOB: Freight Collect. VÁLIDO SÓLO PARA CARGA GENERAL. Posibles gastos adicionales: Telex release USD 75, MBL amend USD 150, Cancelación de booking USD 130. ****NO INCLUIDO GASTOS PORTUARIOS, SEGURO, ALMACENAJE, ESTADÍA NI OTRO GASTO NO DETALLADO****. **NO INCLUIDO EL DESPACHO ADUANERO**. USUALMENTE LOS EXPORTADORES CUENTAN CON SUS PROPIOS DESPACHANTES, DE NO SER ASI, FAVOR DE INFORMAR Y LE ENVIAREMOS NUESTROS COSTOS.<br>"
 
 if apply_broker:
     clausula_final += f"DESPACHO DE ADUANA: Coordinado bajo modalidad {operacion} por cuenta de AGT Broker (Posición Arancelaria: {pa_code}).<br>"
